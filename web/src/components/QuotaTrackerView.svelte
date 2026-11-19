@@ -28,6 +28,7 @@
   import MenuItem from '../lib/ui/MenuItem.svelte'
   import { maxPanelWidth, placePanel, placementStyle } from '../lib/ui/menuPosition'
   import { portal } from '../lib/ui/portal'
+  import { t } from '../lib/i18n.svelte'
   import { getIconPath } from './connections/types'
   import EditConnectionModal, { type ConnectionUpdate } from './connections/EditConnectionModal.svelte'
   import QuotaTable from './quota/QuotaTable.svelte'
@@ -49,7 +50,8 @@
     filterQuotaStateByConnections,
     filterQuotasByVisibility,
     getConnectionsEmptyMessage,
-    getConnectionsPaginationSummary,
+    getConnectionsPageRange,
+    accountStatusLabel,
     getHiddenQuotaRows,
     groupConnectionsByProvider,
     getProviderOptions,
@@ -896,11 +898,26 @@
 
   let hasEligibleConnections = $derived(totals.eligibleConnections > 0)
   let hasVisibleConnections = $derived(sortedConnections.length > 0)
-  let emptyState = $derived(getConnectionsEmptyMessage(totals, providerFilter, accountFilter))
-  let connectionsPageSummary = $derived(getConnectionsPaginationSummary(pagination))
+  // The empty-state copy comes from quota/types.ts as English source text; the
+  // placeholders are filled here so a translation can order them.
+  let emptyState = $derived.by(() => {
+    const state = getConnectionsEmptyMessage(totals, providerFilter, accountFilter)
+    return {
+      icon: state.icon,
+      title: t(state.title),
+      description: t(state.description, {
+        provider: providerLabel(providerFilter),
+        status: t(accountStatusLabel(accountFilter)),
+      }),
+    }
+  })
+  let connectionsPageSummary = $derived.by(() => {
+    const { start, end } = getConnectionsPageRange(pagination)
+    return t('Showing {start}-{end} of {total}', { start, end, total: pagination.total })
+  })
   let isCustomPageSize = $derived(!ACCOUNT_PAGE_SIZE_OPTIONS.includes(pageSize))
   let selectedProviderLabel = $derived(
-    providerFilter === 'all' ? 'All providers' : providerLabel(providerFilter),
+    providerFilter === 'all' ? t('All providers') : providerLabel(providerFilter),
   )
 
   // ─── Auto-refresh lifecycle ────────────────────────────────────────────────
@@ -1122,7 +1139,7 @@
           class="flex h-11 sm:h-8 items-center justify-between gap-1 rounded-lg border border-border-subtle bg-surface-2 px-2 text-xs text-text-main transition-colors hover:bg-surface-3"
           aria-haspopup="menu"
           aria-expanded={providerMenuOpen}
-          title="Filter quota providers"
+          title={t('Filter quota providers')}
         >
           <span class="flex min-w-0 items-center gap-1.5">
             {#if providerFilter === 'all'}
@@ -1147,7 +1164,7 @@
             use:portal
             bind:this={providerDropdownPanel}
             role="menu"
-            aria-label="Filter quota providers"
+            aria-label={t('Filter quota providers')}
             tabindex="-1"
             style={providerPanelStyle}
             class="fixed z-50 w-max rounded-xl border border-border bg-surface p-1.5 shadow-[var(--shadow-elev)]"
@@ -1161,7 +1178,7 @@
                 : 'text-text-main hover:bg-surface-2'}"
             >
               <span class="material-symbols-outlined text-[22px]">apps</span>
-              <span class="font-medium">All providers</span>
+              <span class="font-medium">{t('All providers')}</span>
               {#if providerFilter === 'all'}
                 <span class="material-symbols-outlined ml-auto text-[20px]">check</span>
               {/if}
@@ -1201,10 +1218,10 @@
         bind:value={accountFilter}
         onchange={handleAccountFilterChange}
         class="h-11 sm:h-8 rounded-lg border border-border-subtle bg-surface-2 px-2 text-xs text-text-main outline-none transition-colors hover:bg-surface-3"
-        aria-label="Filter accounts by status"
+        aria-label={t('Filter accounts by status')}
       >
         {#each ACCOUNT_FILTER_OPTIONS as option (option.value)}
-          <option value={option.value}>{option.label}</option>
+          <option value={option.value}>{t(option.label)}</option>
         {/each}
       </select>
 
@@ -1213,22 +1230,22 @@
         <select
           bind:value={quotaSortMode}
           class="h-11 sm:h-8 rounded-lg border border-border-subtle bg-surface-2 px-2 text-xs text-text-main outline-none transition-colors hover:bg-surface-3"
-          aria-label="Sort Codex quotas by remaining"
+          aria-label={t('Sort Codex quotas by remaining')}
         >
           {#each QUOTA_SORT_OPTIONS as option (option.value)}
-            <option value={option.value}>{option.label}</option>
+            <option value={option.value}>{t(option.label)}</option>
           {/each}
         </select>
       {/if}
 
-      <Menu label="Quota tracker actions" triggerIcon="tune" minWidth="17rem">
+      <Menu label={t('Quota tracker actions')} triggerIcon="tune" minWidth="17rem">
         <MenuItem
           label={$emailPrivacy ? 'Show full emails' : 'Mask emails'}
           icon={$emailPrivacy ? 'visibility' : 'visibility_off'}
           onSelect={() => emailPrivacy.toggle()}
         />
         <MenuItem
-          label="Expiring first"
+          label={t('Expiring first')}
           icon="hourglass_top"
           checkbox
           pressed={expiringFirst}
@@ -1238,13 +1255,13 @@
         <div class="my-1 border-t border-border-subtle" role="separator"></div>
 
         <MenuItem
-          label="Disable depleted accounts"
+          label={t('Disable depleted accounts')}
           icon="block"
           disabled={bulkToggling}
           onSelect={handleDisableDepleted}
         />
         <MenuItem
-          label="Enable accounts with quota"
+          label={t('Enable accounts with quota')}
           icon="check_circle"
           disabled={bulkToggling}
           onSelect={handleEnableAvailable}
@@ -1253,7 +1270,7 @@
         <div class="my-1 border-t border-border-subtle" role="separator"></div>
 
         <MenuItem
-          label="Auto-refresh"
+          label={t('Auto-refresh')}
           icon="sync"
           checkbox
           pressed={autoRefresh}
@@ -1261,7 +1278,7 @@
           onSelect={() => (autoRefresh = !autoRefresh)}
         />
         <MenuItem
-          label="Refresh all"
+          label={t('Refresh all')}
           icon="refresh"
           disabled={refreshingAll}
           onSelect={() => refreshAll(true)}
@@ -1444,7 +1461,7 @@
                     type="button"
                     disabled={isLoading || rowBusy || glmResetCardConsuming}
                     onclick={() => openGlmResetCards(conn)}
-                    aria-label="Redeem a GLM reset card"
+                    aria-label={t('Redeem a GLM reset card')}
                     title={resetCardCount > 0
                       ? `Redeem a GLM reset card (${resetCardCount} available)`
                       : 'Check GLM reset cards'}
@@ -1468,7 +1485,7 @@
                     type="button"
                     onclick={() => toggleAutoPing(conn.id, conn.provider, !isAutoPingActive)}
                     title={AUTO_PING_TOOLTIPS[conn.provider]}
-                    aria-label="Toggle auto-ping"
+                    aria-label={t('Toggle auto-ping')}
                     class="tap-target flex h-11 sm:h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-surface-3 cursor-pointer {isAutoPingActive ? 'text-primary' : 'text-text-muted'}"
                   >
                     <span class="material-symbols-outlined text-[18px]">bolt</span>
@@ -1476,8 +1493,8 @@
                   <button
                     type="button"
                     onclick={() => (autoPingEditing = conn)}
-                    title="Auto-ping schedule"
-                    aria-label="Configure auto-ping schedule"
+                    title={t('Auto-ping schedule')}
+                    aria-label={t('Configure auto-ping schedule')}
                     class="tap-target flex h-11 sm:h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-surface-3 cursor-pointer {hasSchedule
                       ? 'text-primary'
                       : 'text-text-muted'}"
@@ -1491,8 +1508,8 @@
                   type="button"
                   onclick={() => refreshProvider(conn.id, conn.provider)}
                   disabled={isLoading || rowBusy}
-                  aria-label="Refresh quota"
-                  title="Refresh quota"
+                  aria-label={t('Refresh quota')}
+                  title={t('Refresh quota')}
                   class="tap-target flex h-11 sm:h-8 w-8 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-surface-3 hover:text-text-main disabled:opacity-50 cursor-pointer"
                 >
                   <span
@@ -1507,8 +1524,8 @@
                   type="button"
                   onclick={() => openEditModal(conn)}
                   disabled={rowBusy}
-                  aria-label="Edit connection"
-                  title="Edit connection"
+                  aria-label={t('Edit connection')}
+                  title={t('Edit connection')}
                   class="tap-target flex h-11 sm:h-8 w-8 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-surface-3 hover:text-primary disabled:opacity-50 cursor-pointer"
                 >
                   <span class="material-symbols-outlined text-[18px]">edit</span>
@@ -1519,8 +1536,8 @@
                   type="button"
                   onclick={() => handleDeleteConnection(conn.id)}
                   disabled={rowBusy}
-                  aria-label="Delete connection"
-                  title="Delete connection"
+                  aria-label={t('Delete connection')}
+                  title={t('Delete connection')}
                   class="tap-target flex h-11 sm:h-8 w-8 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-red-500/10 hover:text-red-500 disabled:opacity-50 cursor-pointer"
                 >
                   <span
@@ -1573,7 +1590,7 @@
               />
               {#if visibleQuotas.length === 0 && rawQuotas.length === 0}
                 <div class="py-3 text-center text-xs text-text-muted">
-                  Account active. No quota limits tracked.
+                  {t('Account active. No quota limits tracked.')}
                 </div>
               {/if}
             {/if}
@@ -1582,7 +1599,7 @@
                 class="mt-2 flex min-w-0 items-center gap-1 border-t border-border-subtle/60 pt-2 text-[10px] text-text-muted"
               >
                 <span class="material-symbols-outlined shrink-0 text-[14px]">visibility_off</span>
-                <span class="shrink-0">Hidden:</span>
+                <span class="shrink-0">{t('Hidden:')}</span>
                 <div
                   class="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto whitespace-nowrap pb-2"
                 >
@@ -1591,7 +1608,7 @@
                       type="button"
                       onclick={() => handleShowQuota(conn.provider, quotaRow)}
                       class="shrink-0 rounded-md border border-border-subtle px-1.5 py-0.5 transition-colors hover:bg-surface-3 hover:text-text-main"
-                      title="Show this quota row"
+                      title={t('Show this quota row')}
                     >
                       {quotaRow.name}
                     </button>
@@ -1622,12 +1639,12 @@
               if (Number.isFinite(nextPageSize)) handlePageSizeChange(nextPageSize)
             }}
             class="h-8 rounded-lg border border-border-subtle bg-surface-2 px-2 text-xs text-text-main outline-none transition-colors hover:bg-surface-3"
-            aria-label="Accounts per page"
+            aria-label={t('Accounts per page')}
           >
             {#each ACCOUNT_PAGE_SIZE_OPTIONS as option (option)}
-              <option value={String(option)}>{option} / page</option>
+              <option value={String(option)}>{t('{pageSize} / page', { pageSize: option })}</option>
             {/each}
-            <option value="custom">Custom</option>
+            <option value="custom">{t('Custom')}</option>
           </select>
           <input
             type="number"
@@ -1638,8 +1655,8 @@
             onblur={commitCustomPageSize}
             onkeydown={handleCustomPageSizeKeydown}
             class="h-8 w-20 rounded-lg border border-border-subtle bg-surface-2 px-2 text-xs text-text-main outline-none transition-colors hover:bg-surface-3"
-            aria-label="Custom accounts per page"
-            placeholder="Custom"
+            aria-label={t('Custom accounts per page')}
+            placeholder={t('Custom')}
           />
           <span class="text-xs text-text-muted">
             Page {pagination.page} / {pagination.totalPages}
@@ -1652,13 +1669,13 @@
             disabled={pagination.page <= 1 || connectionsLoading || refreshingAll}
             class="flex h-11 sm:h-8 items-center rounded-lg border border-border-subtle px-3 text-xs text-text-main transition-colors hover:bg-surface-3 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            First Page
+            {t('First Page')}
           </button>
           <button
             type="button"
             onclick={() => (page = Math.max(1, page - 1))}
             disabled={pagination.page <= 1 || connectionsLoading || refreshingAll}
-            aria-label="Previous accounts page"
+            aria-label={t('Previous accounts page')}
             class="tap-target flex h-11 sm:h-8 w-8 items-center justify-center rounded-lg border border-border-subtle text-text-main transition-colors hover:bg-surface-3 disabled:cursor-not-allowed disabled:opacity-40"
           >
             <span class="material-symbols-outlined text-[16px]">chevron_left</span>
@@ -1667,7 +1684,7 @@
             type="button"
             onclick={() => (page = Math.min(pagination.totalPages, page + 1))}
             disabled={pagination.page >= pagination.totalPages || connectionsLoading || refreshingAll}
-            aria-label="Next accounts page"
+            aria-label={t('Next accounts page')}
             class="tap-target flex h-11 sm:h-8 w-8 items-center justify-center rounded-lg border border-border-subtle text-text-main transition-colors hover:bg-surface-3 disabled:cursor-not-allowed disabled:opacity-40"
           >
             <span class="material-symbols-outlined text-[16px]">chevron_right</span>
@@ -1678,7 +1695,7 @@
             disabled={pagination.page >= pagination.totalPages || connectionsLoading || refreshingAll}
             class="flex h-11 sm:h-8 items-center rounded-lg border border-border-subtle px-3 text-xs text-text-main transition-colors hover:bg-surface-3 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            Last Page
+            {t('Last Page')}
           </button>
         </div>
       </div>
@@ -1726,7 +1743,7 @@
           onclick={closeResetCredits}
           disabled={resetCreditConsuming}
           class="text-text-muted hover:text-text-main transition-colors disabled:opacity-50 cursor-pointer"
-          aria-label="Close"
+          aria-label={t('Close')}
         >
           <span class="material-symbols-outlined">close</span>
         </button>
@@ -1737,7 +1754,7 @@
           <div class="flex items-start gap-3">
             <span class="material-symbols-outlined text-amber-500">warning</span>
             <div class="min-w-0">
-              <p class="font-semibold text-text-main">Redeem this reset credit?</p>
+              <p class="font-semibold text-text-main">{t('Redeem this reset credit?')}</p>
               <p class="mt-1 text-sm text-text-muted">{getResetCreditConfirmation(resetCreditPending)}</p>
             </div>
           </div>
@@ -1760,15 +1777,15 @@
       </p>
 
       {#if resetCreditLoading}
-        <p class="text-sm text-text-muted py-4 text-center">Loading reset credits…</p>
+        <p class="text-sm text-text-muted py-4 text-center">{t('Loading reset credits…')}</p>
       {:else if resetCreditError && resetCreditList.length === 0}
         <p class="text-sm text-red-500 py-4 text-center">{resetCreditError}</p>
       {:else if resetCreditList.length === 0 && resetCreditCount > 0}
         <p class="text-sm text-text-muted py-4 text-center">
-          Credit details are currently unavailable. Refresh and try again.
+          {t('Credit details are currently unavailable. Refresh and try again.')}
         </p>
       {:else if resetCreditList.length === 0}
-        <p class="text-sm text-text-muted py-4 text-center">No reset credits are available on this account.</p>
+        <p class="text-sm text-text-muted py-4 text-center">{t('No reset credits are available on this account.')}</p>
       {:else}
         <div class="space-y-2 max-h-64 overflow-y-auto">
           {#each resetCreditList as credit, index (credit.selectionToken)}
@@ -1790,7 +1807,7 @@
                     Expires in {getCodexResetCreditExpiryLabel(credit.expiresAt).relative} · {getCodexResetCreditExpiryLabel(credit.expiresAt).absolute}
                   </span>
                 {:else}
-                  <span class="block text-[11px] text-text-muted">No expiry date</span>
+                  <span class="block text-[11px] text-text-muted">{t('No expiry date')}</span>
                 {/if}
                 {#if credit.description}
                   <span class="block text-[11px] text-text-subtle mt-0.5">{credit.description}</span>
@@ -1802,7 +1819,7 @@
                 disabled={resetCreditConsuming}
                 class="shrink-0 px-2.5 py-1.5 rounded-lg bg-primary text-[11px] font-semibold text-white hover:bg-primary-hover transition-colors disabled:opacity-50 cursor-pointer"
               >
-                Redeem
+                {t('Redeem')}
               </button>
             </div>
           {/each}
@@ -1822,7 +1839,7 @@
             disabled={resetCreditConsuming}
             class="px-3 py-2 rounded-lg border border-border text-xs font-semibold text-text-main hover:bg-surface-2 transition-colors disabled:opacity-50 cursor-pointer"
           >
-            Back
+            {t('Back')}
           </button>
           <button
             type="button"
@@ -1839,7 +1856,7 @@
             disabled={resetCreditConsuming}
             class="px-3 py-2 rounded-lg border border-border text-xs font-semibold text-text-main hover:bg-surface-2 transition-colors disabled:opacity-50 cursor-pointer"
           >
-            Close
+            {t('Close')}
           </button>
         {/if}
       </div>
@@ -1856,13 +1873,13 @@
     ></div>
     <div class="relative w-full max-w-md bg-surface border border-border-subtle rounded-[14px] shadow-[var(--shadow-elev)] p-6">
       <div class="flex items-center justify-between pb-3 border-b border-border-subtle mb-4">
-        <h2 class="text-lg font-semibold text-text-main">Redeem a GLM reset card</h2>
+        <h2 class="text-lg font-semibold text-text-main">{t('Redeem a GLM reset card')}</h2>
         <button
           type="button"
           onclick={closeGlmResetCards}
           disabled={glmResetCardConsuming}
           class="text-text-muted hover:text-text-main transition-colors disabled:opacity-50 cursor-pointer"
-          aria-label="Close"
+          aria-label={t('Close')}
         >
           <span class="material-symbols-outlined">close</span>
         </button>
@@ -1873,9 +1890,9 @@
           <div class="flex items-start gap-3">
             <span class="material-symbols-outlined text-amber-500">warning</span>
             <div class="min-w-0">
-              <p class="font-semibold text-text-main">Redeem this reset card?</p>
+              <p class="font-semibold text-text-main">{t('Redeem this reset card?')}</p>
               <p class="mt-1 text-sm text-text-muted">
-                This will immediately reset your GLM quota window. The card will be consumed permanently.
+                {t('This will immediately reset your GLM quota window. The card will be consumed permanently.')}
               </p>
             </div>
           </div>
@@ -1898,15 +1915,15 @@
       </p>
 
       {#if glmResetCardLoading}
-        <p class="text-sm text-text-muted py-4 text-center">Loading reset cards…</p>
+        <p class="text-sm text-text-muted py-4 text-center">{t('Loading reset cards…')}</p>
       {:else if glmResetCardError && glmResetCardList.length === 0}
         <p class="text-sm text-red-500 py-4 text-center">{glmResetCardError}</p>
       {:else if glmResetCardList.length === 0 && glmResetCardCount > 0}
         <p class="text-sm text-text-muted py-4 text-center">
-          Card details are currently unavailable. Refresh and try again.
+          {t('Card details are currently unavailable. Refresh and try again.')}
         </p>
       {:else if glmResetCardList.length === 0}
-        <p class="text-sm text-text-muted py-4 text-center">No reset cards are available on this account.</p>
+        <p class="text-sm text-text-muted py-4 text-center">{t('No reset cards are available on this account.')}</p>
       {:else}
         <div class="space-y-2 max-h-64 overflow-y-auto">
           {#each glmResetCardList as credit, index (credit.recordId)}
@@ -1933,7 +1950,7 @@
                 disabled={glmResetCardConsuming}
                 class="shrink-0 px-2.5 py-1.5 rounded-lg bg-primary text-[11px] font-semibold text-white hover:bg-primary-hover transition-colors disabled:opacity-50 cursor-pointer"
               >
-                Redeem
+                {t('Redeem')}
               </button>
             </div>
           {/each}
@@ -1953,7 +1970,7 @@
             disabled={glmResetCardConsuming}
             class="px-3 py-2 rounded-lg border border-border text-xs font-semibold text-text-main hover:bg-surface-2 transition-colors disabled:opacity-50 cursor-pointer"
           >
-            Back
+            {t('Back')}
           </button>
           <button
             type="button"
@@ -1970,7 +1987,7 @@
             disabled={glmResetCardConsuming}
             class="px-3 py-2 rounded-lg border border-border text-xs font-semibold text-text-main hover:bg-surface-2 transition-colors disabled:opacity-50 cursor-pointer"
           >
-            Close
+            {t('Close')}
           </button>
         {/if}
       </div>

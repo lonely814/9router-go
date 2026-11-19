@@ -229,7 +229,9 @@ export function getConnectionsEmptyMessage(
       description:
         providerFilter === 'all'
           ? 'Try changing the account status filter to see more quota trackers.'
-          : `No ${accountFilter === 'inactive' ? 'turned off' : accountFilter === 'active' ? 'active' : 'matching'} accounts found for ${providerFilter}.`,
+          : accountFilter === 'all'
+            ? 'No matching accounts found for {provider}.'
+            : 'No {status} accounts found for {provider}.',
     }
   }
   return {
@@ -239,13 +241,9 @@ export function getConnectionsEmptyMessage(
   }
 }
 
-export function getPageSizeLabel(pageSize: number, isCustomPageSize: boolean): string {
-  return isCustomPageSize ? `Custom: ${pageSize} / page` : `${pageSize} / page`
-}
-
-export function getConnectionsPaginationSummary(pagination: Pagination): string {
-  const { start, end } = getConnectionsPageRange(pagination)
-  return `Showing ${start}-${end} of ${pagination.total}`
+/** The account-status word used inside the filtered empty state. */
+export function accountStatusLabel(accountFilter: string): string {
+  return accountFilter === 'inactive' ? 'turned off' : accountFilter === 'active' ? 'active' : ''
 }
 
 export function shouldResetPage(previousValue: string, nextValue: string): boolean {
