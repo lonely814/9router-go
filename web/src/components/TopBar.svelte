@@ -6,6 +6,7 @@
   import MenuItem from '../lib/ui/MenuItem.svelte'
   import { type ActiveTab } from '../lib/router'
   import { promptInstall, subscribeInstallPrompt } from '../lib/pwa'
+  import { t } from '../lib/i18n.svelte'
 
   let {
     activeTab = 'endpoint',
@@ -222,6 +223,8 @@
     },
   }
 
+  // The map holds English source text; t() runs at render time so a locale
+  // switch re-renders the header through the same lookup the sidebar uses.
   let currentMeta = $derived(
     routeMetaMap[activeTab] || {
       title: pageTitle || 'Dashboard',
@@ -230,9 +233,9 @@
     }
   )
 
-  let displayTitle = $derived(pageTitle || currentMeta.title)
+  let displayTitle = $derived(pageTitle || t(currentMeta.title))
   let displayDescription = $derived(
-    pageDescription !== undefined ? pageDescription : currentMeta.description
+    pageDescription !== undefined ? pageDescription : t(currentMeta.description)
   )
 </script>
 
@@ -246,7 +249,7 @@
         type="button"
         onclick={onMenuClick}
         class="lg:hidden p-1.5 rounded-lg text-text-muted hover:text-text-main hover:bg-surface-2 transition-colors cursor-pointer"
-        aria-label="Toggle menu"
+        aria-label={t('Toggle menu')}
       >
         <span class="material-symbols-outlined text-[22px]">menu</span>
       </button>
@@ -260,7 +263,7 @@
             onclick={onBackToProviders}
             class="hidden sm:block text-text-muted hover:text-primary transition-colors cursor-pointer text-sm font-normal"
           >
-            Providers
+            {t('Providers')}
           </button>
         </div>
         <div class="flex items-center gap-2 min-w-0">
@@ -303,36 +306,36 @@
     <button
       type="button"
       onclick={() => onOpenSearch?.()}
-      title="Search models, providers, pages and settings (Ctrl+K)"
-      aria-label="Open search"
+      title={t('Search models, providers, pages and settings (Ctrl+K)')}
+      aria-label={t('Open search')}
       class="flex items-center gap-1.5 rounded-lg border border-border bg-surface-2 px-2.5 py-1.5 text-xs text-text-muted transition-colors hover:border-brand-500/40 hover:text-text-main cursor-pointer"
     >
       <span class="material-symbols-outlined text-[16px]">search</span>
-      <span class="hidden sm:inline">Search</span>
+      <span class="hidden sm:inline">{t('Search')}</span>
       <kbd
         class="hidden lg:inline rounded border border-border bg-bg px-1 font-code text-[10px] text-text-subtle"
         >Ctrl K</kbd
       >
     </button>
-    <Menu label="Account and display options" triggerIcon="account_circle" minWidth="15rem">
-      <MenuItem label="Donate" icon="volunteer_activism" onSelect={() => (isDonateOpen = true)} />
+    <Menu label={t('Account and display options')} triggerIcon="account_circle" minWidth="15rem">
+      <MenuItem label={t('Donate')} icon="volunteer_activism" onSelect={() => (isDonateOpen = true)} />
 
       {#if canInstall}
-        <MenuItem label="Install App" icon="install_desktop" onSelect={promptInstall} />
+        <MenuItem label={t('Install App')} icon="install_desktop" onSelect={promptInstall} />
       {/if}
 
       <div class="my-1 border-t border-border-subtle" role="separator"></div>
 
       <MenuItem
-        label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+        label={t(isDark ? 'Switch to light mode' : 'Switch to dark mode')}
         icon={isDark ? 'light_mode' : 'dark_mode'}
         onSelect={toggleTheme}
       />
-      <MenuItem label="Change Log" icon="history" onSelect={() => (isChangelogOpen = true)} />
+      <MenuItem label={t('Change Log')} icon="history" onSelect={() => (isChangelogOpen = true)} />
 
       <div class="my-1 border-t border-border-subtle" role="separator"></div>
 
-      <MenuItem label="Logout" icon="logout" danger onSelect={handleLogout} />
+      <MenuItem label={t('Logout')} icon="logout" danger onSelect={handleLogout} />
     </Menu>
   </div>
 </header>
@@ -356,7 +359,7 @@
       onclick={() => (isDonateOpen = false)}
       role="button"
       tabindex="-1"
-      aria-label="Close background"
+      aria-label={t('Close background')}
     ></div>
 
     <div
@@ -365,20 +368,20 @@
       <div class="flex items-center justify-between pb-3 border-b border-border-subtle">
         <h2 class="text-lg font-semibold text-text-main flex items-center gap-2">
           <span class="material-symbols-outlined text-pink-500">volunteer_activism</span>
-          Support 9router-go
+          {t('Support 9router-go')}
         </h2>
         <button
           type="button"
           onclick={() => (isDonateOpen = false)}
           class="p-1 rounded-lg text-text-muted hover:text-text-main hover:bg-surface-2 transition-colors cursor-pointer"
-          aria-label="Close"
+          aria-label={t('Close')}
         >
           <span class="material-symbols-outlined text-[20px]">close</span>
         </button>
       </div>
 
       <p class="text-sm text-text-muted leading-relaxed">
-        9router-go is a fast, lightweight and open-source high-throughput AI gateway in Go. If 9router-go saves you time and tokens, consider supporting the project!
+        {t('9router-go is a fast, lightweight and open-source high-throughput AI gateway in Go. If 9router-go saves you time and tokens, consider supporting the project!')}
       </p>
 
       <!-- Three destinations, stacked rather than tiled: a 2-column grid leaves
@@ -396,9 +399,9 @@
           </div>
           <div class="min-w-0">
             <div class="text-sm font-semibold text-text-main group-hover:text-brand-500 transition-colors">
-              GitHub Repository
+              {t('GitHub Repository')}
             </div>
-            <div class="text-xs text-text-muted">Star & contribute on GitHub</div>
+            <div class="text-xs text-text-muted">{t('Star & contribute on GitHub')}</div>
           </div>
         </a>
 
@@ -413,9 +416,9 @@
           </div>
           <div class="min-w-0">
             <div class="text-sm font-semibold text-text-main group-hover:text-pink-500 transition-colors">
-              Releases & Updates
+              {t('Releases & Updates')}
             </div>
-            <div class="text-xs text-text-muted">Latest releases & changelog</div>
+            <div class="text-xs text-text-muted">{t('Latest releases & changelog')}</div>
           </div>
         </a>
 
@@ -433,9 +436,9 @@
           </div>
           <div class="min-w-0">
             <div class="text-sm font-semibold text-text-main group-hover:text-sky-700 dark:group-hover:text-sky-400 transition-colors">
-              Telegram Group
+              {t('Telegram Group')}
             </div>
-            <div class="text-xs text-text-muted">Release notes, questions, provider issues</div>
+            <div class="text-xs text-text-muted">{t('Release notes, questions, provider issues')}</div>
           </div>
         </a>
       </div>
@@ -446,7 +449,7 @@
           onclick={() => (isDonateOpen = false)}
           class="px-4 py-2 text-sm rounded-lg bg-surface-2 hover:bg-surface-3 text-text-main font-medium transition-colors cursor-pointer"
         >
-          Close
+          {t('Close')}
         </button>
       </div>
     </div>
@@ -461,7 +464,7 @@
       onclick={() => (isLogoutNoticeOpen = false)}
       role="button"
       tabindex="-1"
-      aria-label="Close background"
+      aria-label={t('Close background')}
     ></div>
 
     <div
@@ -474,13 +477,13 @@
       <div class="flex items-center justify-between">
         <h2 id="logout-notice-title" class="text-base font-semibold text-text-main flex items-center gap-2">
           <span class="material-symbols-outlined text-amber-500">lock_open</span>
-          Login is not required
+          {t('Login is not required')}
         </h2>
         <button
           type="button"
           onclick={() => (isLogoutNoticeOpen = false)}
           class="p-1 rounded-lg text-text-muted hover:text-text-main hover:bg-surface-2 transition-colors cursor-pointer"
-          aria-label="Close"
+          aria-label={t('Close')}
         >
           <span class="material-symbols-outlined text-[20px]">close</span>
         </button>
@@ -499,7 +502,7 @@
           onclick={() => (isLogoutNoticeOpen = false)}
           class="px-4 py-2 text-sm rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-medium transition-colors cursor-pointer"
         >
-          Got it
+          {t('Got it')}
         </button>
       </div>
     </div>
