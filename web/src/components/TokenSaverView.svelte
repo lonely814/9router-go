@@ -5,6 +5,7 @@
   import Modal from '../lib/ui/Modal.svelte'
   import Button from '../lib/ui/Button.svelte'
   import { copyToClipboard } from '../lib/clipboard'
+  import { t } from '../lib/i18n.svelte'
   import { api, type Settings } from '../api/client'
 
   interface Props {
@@ -241,14 +242,14 @@
   )
   let headroomStatusLabel = $derived(
     headroomStatus.loading
-      ? 'Checking…'
+      ? t('Checking…')
       : headroomActive
-        ? 'Active'
+        ? t('Active')
         : headroomStatus.localUrl !== false && !headroomStatus.installed
-          ? 'Not installed'
+          ? t('Not installed')
           : headroomStatus.localUrl !== false
-            ? 'Stopped'
-            : 'External'
+            ? t('Stopped')
+            : t('External')
   )
   let headroomLocalUrl = $derived(headroomStatus.localUrl !== false)
   let headroomCanStart = $derived(!!headroomStatus.canStart)
@@ -618,7 +619,7 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
       if (res.error) throw new Error(res.error)
       await refreshHeadroomStatus()
     } catch (e: any) {
-      headroomActionError = e.message || 'Failed to start proxy'
+      headroomActionError = e.message || t('Failed to start proxy')
     } finally {
       headroomActionLoading = false
     }
@@ -630,7 +631,7 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
       await api.stopHeadroom()
       await refreshHeadroomStatus()
     } catch (e: any) {
-      headroomActionError = e.message || 'Failed to stop proxy'
+      headroomActionError = e.message || t('Failed to stop proxy')
     } finally {
       headroomActionLoading = false
     }
@@ -682,7 +683,7 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
       }
       pendingExtras = []
     } catch (e: any) {
-      extrasActionError = e.message || 'Install failed'
+      extrasActionError = e.message || t('Install failed')
     } finally {
       stopLogPolling()
       extrasActionLoading = false
@@ -701,7 +702,7 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
         extras: (data.extras as { code: boolean; ml: boolean }) || headroomExtras.extras,
       }
     } catch (e: any) {
-      extrasActionError = e.message || 'Remove failed'
+      extrasActionError = e.message || t('Remove failed')
     } finally {
       stopLogPolling()
       removingExtra = null
@@ -712,9 +713,9 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
     if (pendingExtras.length === 0) return
     if (pendingExtras.includes('ml')) {
       extrasConfirm = {
-        title: 'Install [ml]',
-        message: '[ml] downloads ~1 GB (torch + huggingface-hub). Continue?',
-        confirmText: 'Install',
+        title: t('Install [{extra}]', { extra: 'ml' }),
+        message: t('[{extra}] downloads ~1 GB (torch + huggingface-hub). Continue?', { extra: 'ml' }),
+        confirmText: t('Install'),
         variant: 'primary',
         onConfirm: installExtrasConfirmed,
       }
@@ -725,9 +726,9 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
 
   function handleRemoveExtra(extra: string) {
     extrasConfirm = {
-      title: `Remove [${extra}]`,
-      message: `Remove [${extra}] and its packages?`,
-      confirmText: 'Remove',
+      title: t('Remove [{extra}]', { extra }),
+      message: t('Remove [{extra}] and its packages?', { extra }),
+      confirmText: t('Remove'),
       variant: 'danger',
       onConfirm: () => removeExtraConfirmed(extra),
     }
@@ -746,7 +747,7 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
       if (res.error) throw new Error(res.error)
       await refreshHeadroomStatus()
     } catch (e: any) {
-      extrasActionError = e.message || 'Restart failed'
+      extrasActionError = e.message || t('Restart failed')
     } finally {
       restartingProxy = false
     }
@@ -872,13 +873,13 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
         </span>
         <div class="min-w-0">
           <h3 class="text-sm font-semibold flex flex-wrap items-center gap-x-2 gap-y-1">
-            Optimal Setup: The Developer Stack
+            {t('Optimal Setup: The Developer Stack')}
             <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
-              Recommended Synergy
+              {t('Recommended Synergy')}
             </span>
           </h3>
           <p class="text-xs text-text-muted">
-            Combine RTK + Caveman + ADHD for maximum token efficiency and crisp coding responses.
+            {t('Combine RTK + Caveman + ADHD for maximum token efficiency and crisp coding responses.')}
           </p>
         </div>
       </div>
@@ -891,13 +892,13 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
           <span class="material-symbols-outlined text-sm">
             {recommendedApplied ? 'check' : 'auto_fix_high'}
           </span>
-          {recommendedApplied ? 'Applied!' : 'Apply Recommended'}
+          {recommendedApplied ? t('Applied!') : t('Apply Recommended')}
         </button>
         <button
           type="button"
           class="inline-flex items-center justify-center h-9 w-9 shrink-0 rounded-lg text-text-muted hover:text-text-main hover:bg-surface-3 transition-colors cursor-pointer"
           onclick={() => showRecommendedGuide = !showRecommendedGuide}
-          aria-label="Toggle details"
+          aria-label={t('Toggle details')}
         >
           <span class="material-symbols-outlined text-lg transition-transform {showRecommendedGuide ? 'rotate-180' : ''}">
             expand_more
@@ -909,37 +910,37 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
     {#if showRecommendedGuide}
       <div class="mt-4 pt-4 border-t border-border/60 text-xs text-text-muted space-y-3">
         <p class="text-text-secondary leading-relaxed">
-          While you are free to customize and experiment with any combination, these modules are designed to work together at different stages of the request lifecycle:
+          {t('While you are free to customize and experiment with any combination, these modules are designed to work together at different stages of the request lifecycle:')}
         </p>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div class="p-3 rounded-lg bg-surface-1 border border-border/50">
             <div class="flex items-center gap-1.5 font-semibold text-text-main mb-1">
               <span class="material-symbols-outlined text-sm text-primary">terminal</span>
-              1. RTK (Terminal Output)
+              {t('1. RTK (Terminal Output)')}
             </div>
             <p class="text-[11px] leading-relaxed">
-              Compresses raw bash logs, git diffs, package manager output, and compiler errors before they enter the prompt (saves 60–90% input tokens).
+              {t('Compresses raw bash logs, git diffs, package manager output, and compiler errors before they enter the prompt (saves 60–90% input tokens).')}
             </p>
           </div>
 
           <div class="p-3 rounded-lg bg-surface-1 border border-border/50">
             <div class="flex items-center gap-1.5 font-semibold text-text-main mb-1">
               <span class="material-symbols-outlined text-sm text-secondary">compress</span>
-              2. Caveman (Linguistic Economy)
+              {t('2. Caveman (Linguistic Economy)')}
             </div>
             <p class="text-[11px] leading-relaxed">
-              Instructs the model to discard polite filler, pleasantries, and redundant framing, reducing output token bloat. Includes Auto-Clarity bypass for safety.
+              {t('Instructs the model to discard polite filler, pleasantries, and redundant framing, reducing output token bloat. Includes Auto-Clarity bypass for safety.')}
             </p>
           </div>
 
           <div class="p-3 rounded-lg bg-surface-1 border border-border/50">
             <div class="flex items-center gap-1.5 font-semibold text-text-main mb-1">
               <span class="material-symbols-outlined text-sm text-success">format_list_numbered</span>
-              3. ADHD (Action-First Format)
+              {t('3. ADHD (Action-First Format)')}
             </div>
             <p class="text-[11px] leading-relaxed">
-              Enforces structured action steps, numbered workflows under 2 minutes, and zero conversational fluff. Perfect pair with Caveman for coding.
+              {t('Enforces structured action steps, numbered workflows under 2 minutes, and zero conversational fluff. Perfect pair with Caveman for coding.')}
             </p>
           </div>
         </div>
@@ -947,7 +948,7 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
         <div class="p-2.5 rounded-lg bg-surface-3/50 text-[11px] flex items-start gap-2">
           <span class="material-symbols-outlined text-sm text-warning shrink-0 mt-0.5">info</span>
           <div>
-            <strong class="text-text-main">Cache-Friendly Tip:</strong> Keep <code class="px-1 py-0.5 rounded bg-surface-2 font-mono">Headroom</code> and dynamic input rewriting disabled when using modern LLMs (Claude 3.5+, Gemini 1.5/2.0) to preserve upstream 90% prompt caching discounts. Keep <code class="px-1 py-0.5 rounded bg-surface-2 font-mono">Ponytail</code> off for serious programming sessions.
+            <strong class="text-text-main">{t('Cache-Friendly Tip:')}</strong> {t('Keep')} <code class="px-1 py-0.5 rounded bg-surface-2 font-mono">Headroom</code> {t('and dynamic input rewriting disabled when using modern LLMs (Claude 3.5+, Gemini 1.5/2.0) to preserve upstream 90% prompt caching discounts. Keep')} <code class="px-1 py-0.5 rounded bg-surface-2 font-mono">Ponytail</code> {t('off for serious programming sessions.')}
           </div>
         </div>
       </div>
@@ -958,7 +959,7 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
     <div class="flex items-center justify-between mb-2">
       <h2 class="text-lg font-semibold flex items-center gap-2">
         <span class="material-symbols-outlined text-primary">bolt</span>
-        Token Saver
+        {t('Token Saver')}
       </h2>
     </div>
 
@@ -967,7 +968,7 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
       <div class="flex items-center justify-between gap-4">
         <div class="flex min-w-0 flex-wrap items-center gap-2">
           <p class="font-medium">
-            Compress tool output{' '}
+            {t('Compress tool output')}{' '}
             <a
               href="https://github.com/rtk-ai/rtk"
               target="_blank"
@@ -978,7 +979,7 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
             </a>
           </p>
           <span class="text-xs px-2 py-0.5 rounded font-medium {rtkEnabled ? 'bg-success/15 text-success' : 'bg-surface-3 text-text-muted'}">
-            {rtkEnabled ? 'Active' : 'Disabled'}
+            {rtkEnabled ? t('Active') : t('Disabled')}
           </span>
         </div>
         <div class="flex shrink-0 items-center gap-2">
@@ -987,8 +988,8 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
               type="button"
               onclick={() => (rtkExpanded = !rtkExpanded)}
               class="tap-target p-1.5 -m-1 rounded text-text-muted hover:text-text-main cursor-pointer transition-colors"
-              title={rtkExpanded ? 'Hide settings' : 'Configure'}
-              aria-label={rtkExpanded ? 'Hide RTK settings' : 'Configure RTK'}
+              title={rtkExpanded ? t('Hide settings') : t('Configure')}
+              aria-label={rtkExpanded ? t('Hide RTK settings') : t('Configure RTK')}
               aria-expanded={rtkExpanded}
             >
               <span class="material-symbols-outlined text-base transition-transform {rtkExpanded ? 'rotate-180' : ''}">
@@ -1003,7 +1004,7 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
         </div>
       </div>
       <p class="text-sm text-text-muted mt-1">
-        git/grep/ls/tree/logs → 60-90% fewer input tokens ({rtkFiltersList.length || 55} OmniRoute filters)
+        {t('git/grep/ls/tree/logs → 60-90% fewer input tokens ({count} OmniRoute filters)', { count: rtkFiltersList.length || 55 })}
       </p>
     </div>
 
@@ -1019,7 +1020,7 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
                 ? 'bg-primary text-white shadow-sm'
                 : 'text-text-muted hover:text-text-main'}"
             >
-              Simple
+              {t('Simple')}
             </button>
             <button
               type="button"
@@ -1028,10 +1029,10 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
                 ? 'bg-primary text-white shadow-sm'
                 : 'text-text-muted hover:text-text-main'}"
             >
-              Advance
+              {t('Advance')}
             </button>
           </div>
-          <span class="text-xs text-text-muted font-mono">mode: {rtkMode}</span>
+          <span class="text-xs text-text-muted font-mono">{t('mode: {mode}', { mode: rtkMode })}</span>
         </div>
 
         {#if rtkMode === 'simple'}
@@ -1039,7 +1040,7 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
           <div class="space-y-4 rounded-lg bg-surface-2/40 p-4 border border-border">
             <!-- Intensity pills -->
             <div>
-              <p class="text-xs font-medium text-text-muted mb-2">Compression Intensity</p>
+              <p class="text-xs font-medium text-text-muted mb-2">{t('Compression Intensity')}</p>
               <div class="flex items-center gap-2 flex-wrap">
                 {#each [
                   { id: 'minimal', label: 'Minimal', desc: 'Preserve maximal context (2x lines & chars)' },
@@ -1052,9 +1053,9 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
                     class="px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer {rtkIntensity === item.id
                       ? 'bg-primary text-white border-primary shadow-sm'
                       : 'bg-surface-2 border-border text-text-muted hover:bg-surface-3 hover:text-text-main'}"
-                    title={item.desc}
+                    title={t(item.desc)}
                   >
-                    {item.label}
+                    {t(item.label)}
                   </button>
                 {/each}
               </div>
@@ -1064,8 +1065,8 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div class="flex flex-col gap-1.5">
                 <label for="rtk-max-lines" class="text-xs font-medium text-text-muted flex justify-between">
-                  <span>Max Lines per Tool Result</span>
-                  <span class="font-mono text-primary">{rtkMaxLines} lines</span>
+                  <span>{t('Max Lines per Tool Result')}</span>
+                  <span class="font-mono text-primary">{t('{count} lines', { count: rtkMaxLines })}</span>
                 </label>
                 <input
                   id="rtk-max-lines"
@@ -1081,8 +1082,8 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
 
               <div class="flex flex-col gap-1.5">
                 <label for="rtk-max-chars" class="text-xs font-medium text-text-muted flex justify-between">
-                  <span>Max Characters</span>
-                  <span class="font-mono text-primary">{rtkMaxChars} chars</span>
+                  <span>{t('Max Characters')}</span>
+                  <span class="font-mono text-primary">{t('{count} chars', { count: rtkMaxChars })}</span>
                 </label>
                 <input
                   id="rtk-max-chars"
@@ -1100,8 +1101,8 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
             <!-- Deduplication toggle -->
             <div class="flex items-center justify-between pt-2 border-t border-border/60">
               <div>
-                <p class="text-xs font-medium text-text-main">Consecutive Line Deduplication</p>
-                <p class="text-[11px] text-text-muted">Collapse repetitive log entries into "... (repeated N times)"</p>
+                <p class="text-xs font-medium text-text-main">{t('Consecutive Line Deduplication')}</p>
+                <p class="text-[11px] text-text-muted">{t('Collapse repetitive log entries into "... (repeated N times)"')}</p>
               </div>
               <Toggle
                 checked={rtkDeduplicate}
@@ -1111,7 +1112,7 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
 
             <!-- Enabled category badges -->
             <div class="pt-2 border-t border-border/60">
-              <p class="text-xs font-medium text-text-muted mb-2">Active Category Filters</p>
+              <p class="text-xs font-medium text-text-muted mb-2">{t('Active Category Filters')}</p>
               <div class="flex items-center gap-2 flex-wrap">
                 {#each [
                   { id: 'git', label: 'Git (diff/log/status)' },
@@ -1122,7 +1123,7 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
                 ] as cat}
                   <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium bg-primary/10 text-primary border border-primary/20">
                     <span class="material-symbols-outlined text-[13px]">check_circle</span>
-                    {cat.label}
+                    {t(cat.label)}
                   </span>
                 {/each}
               </div>
@@ -1135,13 +1136,13 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
             <div class="space-y-3">
               <div class="flex items-center justify-between">
                 <div>
-                  <p class="text-xs font-medium text-text-main">Granular Filter Controls (55 Filters)</p>
-                  <p class="text-[11px] text-text-muted">Configure active OmniRoute rules per category or toggle individual tool filters</p>
+                  <p class="text-xs font-medium text-text-main">{t('Granular Filter Controls (55 Filters)')}</p>
+                  <p class="text-[11px] text-text-muted">{t('Configure active OmniRoute rules per category or toggle individual tool filters')}</p>
                 </div>
                 {#if rtkFiltersLoading}
                   <span class="text-xs text-text-muted flex items-center gap-1">
                     <span class="material-symbols-outlined text-xs animate-spin">refresh</span>
-                    Loading filters...
+                    {t('Loading filters...')}
                   </span>
                 {/if}
               </div>
@@ -1166,7 +1167,7 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
                         type="button"
                         onclick={() => toggleFilterCategoryExpand(group.key)}
                         class="p-0.5 rounded text-text-muted hover:text-text-main cursor-pointer"
-                        title={isExpanded ? 'Collapse' : 'Expand'}
+                        title={isExpanded ? t('Collapse') : t('Expand')}
                       >
                         <span class="material-symbols-outlined text-base transition-transform {isExpanded ? 'rotate-90' : ''}">
                           chevron_right
@@ -1174,9 +1175,9 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
                       </button>
                       <button type="button" class="min-w-0 flex-1 text-left cursor-pointer bg-transparent border-0 p-0" onclick={() => toggleFilterCategoryExpand(group.key)}>
                         <div class="flex items-center gap-2">
-                          <span class="text-xs font-semibold text-text-main">{group.label}</span>
+                          <span class="text-xs font-semibold text-text-main">{t(group.label)}</span>
                           <span class="text-[10px] px-1.5 py-0.2 rounded-full font-mono {isCatOn ? 'bg-primary/10 text-primary' : 'bg-surface-3 text-text-muted'}">
-                            {catFilters.length} filters
+                            {t('{count} filters', { count: catFilters.length })}
                           </span>
                         </div>
                         <p class="text-[10px] text-text-muted truncate">{group.desc}</p>
@@ -1184,7 +1185,7 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
                     </div>
                     <div class="flex items-center gap-2 shrink-0 ml-2">
                       <span class="text-[11px] font-medium {isCatOn ? 'text-primary' : 'text-text-muted'}">
-                        {isCatOn ? 'Enabled' : 'Disabled'}
+                        {isCatOn ? t('Enabled') : t('Disabled')}
                       </span>
                       <Toggle
                         size="sm"
@@ -1223,8 +1224,8 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
             <!-- Raw output retention selector -->
             <div class="flex items-center justify-between flex-wrap gap-2 pt-2 border-t border-border/60">
               <div>
-                <p class="text-xs font-medium text-text-main">Raw Output Retention</p>
-                <p class="text-[11px] text-text-muted">Retain uncompressed raw tool execution outputs for debugging</p>
+                <p class="text-xs font-medium text-text-main">{t('Raw Output Retention')}</p>
+                <p class="text-[11px] text-text-muted">{t('Retain uncompressed raw tool execution outputs for debugging')}</p>
               </div>
               <div class="flex items-center gap-1.5">
                 {#each [
@@ -1239,7 +1240,7 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
                       ? 'bg-primary text-white border-primary'
                       : 'bg-surface-1 border-border text-text-muted hover:bg-surface-2'}"
                   >
-                    {ret.label}
+                    {t(ret.label)}
                   </button>
                 {/each}
               </div>
@@ -1250,10 +1251,10 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
               <div class="flex items-center justify-between flex-wrap gap-2">
                 <span class="text-xs font-semibold uppercase tracking-wider text-primary flex items-center gap-1.5">
                   <span class="material-symbols-outlined text-sm">science</span>
-                  Live Test Bench
+                  {t('Live Test Bench')}
                 </span>
                 <div class="flex items-center gap-1.5">
-                  <span class="text-[11px] text-text-muted mr-1">Sample Presets:</span>
+                  <span class="text-[11px] text-text-muted mr-1">{t('Sample Presets:')}</span>
                   <button
                     type="button"
                     onclick={() => handleSetRtkPreset('git')}
@@ -1281,7 +1282,7 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
               <textarea
                 bind:value={rtkTestInput}
                 rows={4}
-                placeholder="Paste sample tool output here (e.g. git diff, npm test, docker logs)..."
+                placeholder={t('Paste sample tool output here (e.g. git diff, npm test, docker logs)...')}
                 class="w-full px-3 py-2 text-xs font-mono rounded bg-surface-1 border border-border focus:outline-none focus:ring-1 focus:ring-primary text-text-main"
               ></textarea>
 
@@ -1292,7 +1293,7 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
                     onclick={() => { rtkTestInput = ''; rtkTestResult = null; }}
                     class="px-3 py-1.5 rounded text-xs text-text-muted hover:text-text-main cursor-pointer"
                   >
-                    Clear
+                    {t('Clear')}
                   </button>
                 {/if}
                 <button
@@ -1303,10 +1304,10 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
                 >
                   {#if rtkTestLoading}
                     <span class="material-symbols-outlined text-sm animate-spin">refresh</span>
-                    Compressing...
+                    {t('Compressing...')}
                   {:else}
                     <span class="material-symbols-outlined text-sm">compress</span>
-                    Compress Output
+                    {t('Compress Output')}
                   {/if}
                 </button>
               </div>
@@ -1317,7 +1318,7 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
                   <div class="flex items-center justify-between flex-wrap gap-2 text-xs">
                     <div class="flex items-center gap-2">
                       <span class="px-2 py-0.5 rounded bg-primary/20 text-primary font-mono font-medium">
-                        Category: {rtkTestResult.detectedCategory}
+                        {t('Category: {category}', { category: rtkTestResult.detectedCategory })}
                       </span>
                       {#each rtkTestResult.techniquesUsed as tech}
                         <span class="px-2 py-0.5 rounded bg-black/10 dark:bg-white/10 text-[11px] font-mono text-text-muted">
@@ -1326,11 +1327,11 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
                       {/each}
                     </div>
                     <div class="flex items-center gap-2 font-mono text-xs">
-                      <span class="text-text-muted">Orig: {rtkTestResult.originalTokens} tok</span>
+                      <span class="text-text-muted">{t('Orig: {count} tok', { count: rtkTestResult.originalTokens })}</span>
                       <span>→</span>
-                      <span class="text-success font-medium">Comp: {rtkTestResult.compressedTokens} tok</span>
+                      <span class="text-success font-medium">{t('Comp: {count} tok', { count: rtkTestResult.compressedTokens })}</span>
                       <span class="px-2 py-0.5 rounded bg-success/20 text-success font-bold">
-                        -{rtkTestResult.savedPct}% saved
+                        {t('-{pct}% saved', { pct: rtkTestResult.savedPct })}
                       </span>
                     </div>
                   </div>
@@ -1343,7 +1344,7 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
                       onclick={() => copyToClipboard(rtkTestResult?.text || '')}
                       class="absolute top-2 right-2 px-2 py-1 rounded bg-surface-2 border border-border text-[10px] text-text-muted hover:text-text-main cursor-pointer"
                     >
-                      Copy
+                      {t('Copy')}
                     </button>
                   </div>
                 </div>
@@ -1359,7 +1360,7 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
       <div class="flex items-center justify-between gap-4">
         <div class="flex min-w-0 flex-wrap items-center gap-2">
           <p class="font-medium">
-            Compress context{' '}
+            {t('Compress context')}{' '}
             <a
               href="https://github.com/chopratejas/headroom"
               target="_blank"
@@ -1379,7 +1380,7 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
             onclick={() => (isHeadroomModalOpen = true)}
             class="text-xs text-primary underline hover:opacity-80 cursor-pointer"
           >
-            {headroomActive ? 'Manage' : 'Setup'}
+            {headroomActive ? t('Manage') : t('Setup')}
           </button>
         </div>
         <div class="flex shrink-0 items-center gap-2">
@@ -1388,8 +1389,8 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
               type="button"
               onclick={() => (headroomExpanded = !headroomExpanded)}
               class="tap-target p-1.5 -m-1 rounded text-text-muted hover:text-text-main cursor-pointer transition-colors"
-              title={headroomExpanded ? 'Hide settings' : 'Configure'}
-              aria-label={headroomExpanded ? 'Hide Headroom settings' : 'Configure Headroom'}
+              title={headroomExpanded ? t('Hide settings') : t('Configure')}
+              aria-label={headroomExpanded ? t('Hide Headroom settings') : t('Configure Headroom')}
               aria-expanded={headroomExpanded}
             >
               <span class="material-symbols-outlined text-base transition-transform {headroomExpanded ? 'rotate-180' : ''}">
@@ -1404,7 +1405,7 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
         </div>
       </div>
       <p class="text-sm text-text-muted mt-1">
-        Compress prompts via /v1/compress before routing to the model
+        {t('Compress prompts via /v1/compress before routing to the model')}
       </p>
     </div>
 
@@ -1413,8 +1414,8 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
         <!-- Autostart with 9router -->
         <div class="flex items-center justify-between gap-4 py-2 border-b border-border/50 mb-3 max-w-lg">
           <div>
-            <p class="text-xs font-medium text-text-main">Autostart with 9router</p>
-            <p class="text-[11px] text-text-muted">Automatically launch local Headroom proxy when 9router-go boots</p>
+            <p class="text-xs font-medium text-text-main">{t('Autostart with 9router')}</p>
+            <p class="text-[11px] text-text-muted">{t('Automatically launch local Headroom proxy when 9router-go boots')}</p>
           </div>
           <Toggle
             size="sm"
@@ -1424,15 +1425,17 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
         </div>
         <div class="flex items-center gap-2 flex-wrap">
           <span class="text-xs text-text-muted">
-            Compression extras{headroomExtras.version ? ` · v${headroomExtras.version}` : ''}:
+            {headroomExtras.version
+              ? t('Compression extras · v{version}:', { version: headroomExtras.version })
+              : t('Compression extras:')}
           </span>
           {#each headroomExtras.available as extra (extra)}
             {@const installed = !!headroomExtras.extras[extra as 'code' | 'ml']}
             {@const pending = pendingExtras.includes(extra)}
             {@const extraTitle =
               extra === 'code'
-                ? 'tree-sitter AST compression for code responses'
-                : 'Kompress-v2 HF model for prose/agentic traces (~+1GB)'}
+                ? t('tree-sitter AST compression for code responses')
+                : t('Kompress-v2 HF model for prose/agentic traces (~+1GB)')}
 
             {#if installed}
               {@const active = extra === 'code' ? codeAware : kompress}
@@ -1452,9 +1455,9 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
                   onclick={() => handleRemoveExtra(extra)}
                   disabled={removingExtra === extra}
                   class="ml-1 text-red-600 dark:text-red-400 underline hover:opacity-80 disabled:opacity-50 cursor-pointer"
-                  title={`Uninstall [${extra}]`}
+                  title={t('Uninstall [{extra}]', { extra })}
                 >
-                  {removingExtra === extra ? 'Uninstalling…' : 'Uninstall'}
+                  {removingExtra === extra ? t('Uninstalling…') : t('Uninstall')}
                 </button>
               </div>
             {:else}
@@ -1482,7 +1485,7 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
               disabled={extrasActionLoading}
               class="px-2.5 py-1 rounded text-xs font-medium bg-primary text-white hover:bg-primary/90 disabled:opacity-50 transition-colors cursor-pointer"
             >
-              {extrasActionLoading ? 'Installing…' : `Install (${pendingExtras.length})`}
+              {extrasActionLoading ? t('Installing…') : t('Install ({count})', { count: pendingExtras.length })}
             </button>
           {/if}
         </div>
@@ -1498,8 +1501,8 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
         {/if}
 
         <p class="text-xs text-text-muted mt-1">
-          Adding <code>[code]</code> enables tree-sitter AST compression (Python/JS/TS/Go/Rust/Java/C/C++/Perl). Adding{' '}
-          <code>[ml]</code> adds ~1 GB (torch + huggingface-hub).
+          {t('Adding')} <code>[code]</code> {t('enables tree-sitter AST compression (Python/JS/TS/Go/Rust/Java/C/C++/Perl). Adding')}{' '}
+          <code>[ml]</code> {t('adds ~1 GB (torch + huggingface-hub).')}
         </p>
       </div>
     {/if}
@@ -1509,7 +1512,7 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
       <div class="flex items-center justify-between gap-4">
         <div class="flex min-w-0 flex-wrap items-center gap-2">
           <p class="font-medium">
-            Compress LLM output{' '}
+            {t('Compress LLM output')}{' '}
             <a
               href="https://github.com/JuliusBrussee/caveman"
               target="_blank"
@@ -1520,7 +1523,7 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
             </a>
           </p>
           <span class="text-xs px-2 py-0.5 rounded font-medium {cavemanEnabled ? 'bg-success/15 text-success' : 'bg-surface-3 text-text-muted'}">
-            {cavemanEnabled ? `Active (${cavemanLevel})` : 'Disabled'}
+            {cavemanEnabled ? t('Active ({level})', { level: cavemanLevel }) : t('Disabled')}
           </span>
         </div>
         <div class="flex shrink-0 items-center gap-2">
@@ -1529,8 +1532,8 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
               type="button"
               onclick={() => (cavemanExpanded = !cavemanExpanded)}
               class="tap-target p-1.5 -m-1 rounded text-text-muted hover:text-text-main cursor-pointer transition-colors"
-              title={cavemanExpanded ? 'Hide settings' : 'Configure'}
-              aria-label={cavemanExpanded ? 'Hide Caveman settings' : 'Configure Caveman'}
+              title={cavemanExpanded ? t('Hide settings') : t('Configure')}
+              aria-label={cavemanExpanded ? t('Hide Caveman settings') : t('Configure Caveman')}
               aria-expanded={cavemanExpanded}
             >
               <span class="material-symbols-outlined text-base transition-transform {cavemanExpanded ? 'rotate-180' : ''}">
@@ -1545,7 +1548,7 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
         </div>
       </div>
       <p class="text-sm text-text-muted mt-1">
-        Terse-style system prompt → ~65% fewer output tokens (up to 87%)
+        {t('Terse-style system prompt → ~65% fewer output tokens (up to 87%)')}
       </p>
     </div>
 
@@ -1561,7 +1564,7 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
                 ? 'bg-primary text-white shadow-sm'
                 : 'text-text-muted hover:text-text-main'}"
             >
-              Simple
+              {t('Simple')}
             </button>
             <button
               type="button"
@@ -1570,10 +1573,10 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
                 ? 'bg-primary text-white shadow-sm'
                 : 'text-text-muted hover:text-text-main'}"
             >
-              Advance
+              {t('Advance')}
             </button>
           </div>
-          <span class="text-xs text-text-muted font-mono">mode: {cavemanMode}</span>
+          <span class="text-xs text-text-muted font-mono">{t('mode: {mode}', { mode: cavemanMode })}</span>
         </div>
 
         {#if cavemanMode === 'simple'}
@@ -1582,7 +1585,7 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
             <!-- Intensity pills & Language -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <p class="text-xs font-medium text-text-muted mb-2">Terseness Intensity</p>
+                <p class="text-xs font-medium text-text-muted mb-2">{t('Terseness Intensity')}</p>
                 <div class="flex items-center gap-1.5 flex-wrap">
                   {#each visibleCavemanLevels as lvl (lvl.id)}
                     <button
@@ -1591,19 +1594,19 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
                       class="px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer {cavemanLevel === lvl.id
                         ? 'bg-primary text-white border-primary shadow-sm'
                         : 'bg-surface-2 border-border text-text-muted hover:bg-surface-3 hover:text-text-main'}"
-                      title={lvl.desc}
+                      title={t(lvl.desc)}
                     >
-                      {lvl.label}
+                      {t(lvl.label)}
                     </button>
                   {/each}
                 </div>
                 <p class="text-[11px] text-primary mt-1.5">
-                  {CAVEMAN_LEVELS.find((lvl) => lvl.id === cavemanLevel)?.desc || ''}
+                  {t(CAVEMAN_LEVELS.find((lvl) => lvl.id === cavemanLevel)?.desc || '')}
                 </p>
               </div>
 
               <div>
-                <p class="text-xs font-medium text-text-muted mb-2">System Prompt Language</p>
+                <p class="text-xs font-medium text-text-muted mb-2">{t('System Prompt Language')}</p>
                 <div class="flex items-center gap-2">
                   {#each [
                     { id: 'en', label: 'English' },
@@ -1616,7 +1619,7 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
                         ? 'bg-primary text-white border-primary shadow-sm'
                         : 'bg-surface-2 border-border text-text-muted hover:bg-surface-3 hover:text-text-main'}"
                     >
-                      {lang.label}
+                      {t(lang.label)}
                     </button>
                   {/each}
                 </div>
@@ -1627,13 +1630,13 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
             <div class="flex items-center justify-between pt-2 border-t border-border/60 gap-4">
               <div class="min-w-0 flex-1">
                 <div class="flex items-center gap-2">
-                  <p class="text-xs font-medium text-text-main">Auto-Clarity Bypass</p>
+                  <p class="text-xs font-medium text-text-main">{t('Auto-Clarity Bypass')}</p>
                   <span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-warning/15 text-warning">
-                    Security & Detail Guard
+                    {t('Security & Detail Guard')}
                   </span>
                 </div>
                 <p class="text-[11px] text-text-muted mt-0.5">
-                  Bypasses terse compression on destructive commands (`rm -rf`, `DROP TABLE`), CVE/security alerts, or when explicit detailed explanations are asked.
+                  {t('Bypasses terse compression on destructive commands (`rm -rf`, `DROP TABLE`), CVE/security alerts, or when explicit detailed explanations are asked.')}
                 </p>
               </div>
               <Toggle
@@ -1647,7 +1650,7 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
               <div class="flex items-center justify-between">
                 <span class="text-xs font-semibold text-text-muted flex items-center gap-1.5">
                   <span class="material-symbols-outlined text-sm">visibility</span>
-                  Injected System Prompt Preview
+                  {t('Injected System Prompt Preview')}
                 </span>
                 {#if cavemanPromptPreview}
                   <button
@@ -1655,16 +1658,16 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
                     onclick={() => copyToClipboard(cavemanPromptPreview)}
                     class="px-2 py-0.5 rounded bg-surface-1 border border-border text-[10px] text-text-muted hover:text-text-main cursor-pointer"
                   >
-                    Copy Prompt
+                    {t('Copy Prompt')}
                   </button>
                 {/if}
               </div>
               {#if cavemanPreviewLoading}
                 <div class="p-3 text-xs text-text-muted font-mono bg-surface-1 rounded border border-border animate-pulse">
-                  Loading system prompt...
+                  {t('Loading system prompt...')}
                 </div>
               {:else}
-                <pre class="p-2.5 rounded bg-black/5 dark:bg-white/5 font-mono text-[11px] overflow-auto max-h-36 whitespace-pre-wrap text-text-muted">{cavemanPromptPreview || 'Prompt preview unavailable'}</pre>
+                <pre class="p-2.5 rounded bg-black/5 dark:bg-white/5 font-mono text-[11px] overflow-auto max-h-36 whitespace-pre-wrap text-text-muted">{cavemanPromptPreview || t('Prompt preview unavailable')}</pre>
               {/if}
             </div>
           </div>
@@ -1674,9 +1677,9 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
             <!-- Input Message Pre-compression toggle -->
             <div class="flex items-center justify-between gap-4">
               <div class="min-w-0 flex-1">
-                <p class="text-xs font-medium text-text-main">Input Message Pre-compression (User Prompts)</p>
+                <p class="text-xs font-medium text-text-main">{t('Input Message Pre-compression (User Prompts)')}</p>
                 <p class="text-[11px] text-text-muted">
-                  Strips greetings, conversational filler, and polite hedges ("Hello", "Please help me to", "Thank you") from incoming user prompts.
+                  {t('Strips greetings, conversational filler, and polite hedges ("Hello", "Please help me to", "Thank you") from incoming user prompts.')}
                 </p>
               </div>
               <Toggle
@@ -1688,18 +1691,18 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
             <!-- Custom Protected Keywords input -->
             <div class="flex flex-col gap-1.5 pt-2 border-t border-border/60">
               <label for="caveman-keywords" class="text-xs font-medium text-text-muted">
-                Custom Protected Keywords (never stripped)
+                {t('Custom Protected Keywords (never stripped)')}
               </label>
               <input
                 id="caveman-keywords"
                 type="text"
                 bind:value={cavemanPreserveKeywords}
                 onblur={handleCavemanPreserveKeywordsBlur}
-                placeholder="e.g. please, thank you, exact"
+                placeholder={t('e.g. please, thank you, exact')}
                 class="w-full px-3 py-1.5 rounded-lg bg-surface-1 border border-border text-xs focus:outline-none focus:ring-1 focus:ring-primary text-text-main font-mono"
               />
               <p class="text-[10px] text-text-muted">
-                Comma-separated words that will be preserved intact if found in user prompts.
+                {t('Comma-separated words that will be preserved intact if found in user prompts.')}
               </p>
             </div>
 
@@ -1708,30 +1711,30 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
               <div class="flex items-center justify-between flex-wrap gap-2">
                 <span class="text-xs font-semibold uppercase tracking-wider text-primary flex items-center gap-1.5">
                   <span class="material-symbols-outlined text-sm">compress</span>
-                  Live Prompt Compressor Bench
+                  {t('Live Prompt Compressor Bench')}
                 </span>
                 <div class="flex items-center gap-1.5">
-                  <span class="text-[11px] text-text-muted mr-1">Sample Presets:</span>
+                  <span class="text-[11px] text-text-muted mr-1">{t('Sample Presets:')}</span>
                   <button
                     type="button"
                     onclick={() => handleSetCavemanPreset('polite')}
                     class="px-2 py-0.5 rounded text-[11px] bg-surface-1 border border-border hover:bg-surface-2 cursor-pointer"
                   >
-                    Polite Query
+                    {t('Polite Query')}
                   </button>
                   <button
                     type="button"
                     onclick={() => handleSetCavemanPreset('troubleshoot')}
                     class="px-2 py-0.5 rounded text-[11px] bg-surface-1 border border-border hover:bg-surface-2 cursor-pointer"
                   >
-                    Troubleshooting
+                    {t('Troubleshooting')}
                   </button>
                   <button
                     type="button"
                     onclick={() => handleSetCavemanPreset('indonesia')}
                     class="px-2 py-0.5 rounded text-[11px] bg-surface-1 border border-border hover:bg-surface-2 cursor-pointer"
                   >
-                    Bahasa Indonesia
+                    {t('Bahasa Indonesia')}
                   </button>
                 </div>
               </div>
@@ -1739,7 +1742,7 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
               <textarea
                 bind:value={cavemanTestInput}
                 rows={3}
-                placeholder="Type user message here to test input pre-compression (e.g. 'Hello, please help me to...')"
+                placeholder={t('Type user message here to test input pre-compression (e.g. \'Hello, please help me to...\')')}
                 class="w-full px-3 py-2 text-xs font-mono rounded bg-surface-1 border border-border focus:outline-none focus:ring-1 focus:ring-primary text-text-main"
               ></textarea>
 
@@ -1750,7 +1753,7 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
                     onclick={() => { cavemanTestInput = ''; cavemanTestResult = null; }}
                     class="px-3 py-1.5 rounded text-xs text-text-muted hover:text-text-main cursor-pointer"
                   >
-                    Clear
+                    {t('Clear')}
                   </button>
                 {/if}
                 <button
@@ -1761,10 +1764,10 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
                 >
                   {#if cavemanTestLoading}
                     <span class="material-symbols-outlined text-sm animate-spin">refresh</span>
-                    Compressing...
+                    {t('Compressing...')}
                   {:else}
                     <span class="material-symbols-outlined text-sm">bolt</span>
-                    Compress Prompt
+                    {t('Compress Prompt')}
                   {/if}
                 </button>
               </div>
@@ -1773,14 +1776,14 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
                 <div class="mt-3 p-3 rounded-lg bg-surface-1 border border-border space-y-3">
                   <!-- Metrics header -->
                   <div class="flex items-center justify-between flex-wrap gap-2 text-xs">
-                    <span class="text-xs font-medium text-text-muted">Compressed Result:</span>
+                    <span class="text-xs font-medium text-text-muted">{t('Compressed Result:')}</span>
                     <div class="flex items-center gap-2 font-mono text-xs">
-                      <span class="text-text-muted">Orig: {cavemanTestResult.originalTokens} tok</span>
+                      <span class="text-text-muted">{t('Orig: {count} tok', { count: cavemanTestResult.originalTokens })}</span>
                       <span>→</span>
-                      <span class="text-success font-medium">Comp: {cavemanTestResult.compressedTokens} tok</span>
+                      <span class="text-success font-medium">{t('Comp: {count} tok', { count: cavemanTestResult.compressedTokens })}</span>
                       {#if cavemanTestResult.savedPct > 0}
                         <span class="px-2 py-0.5 rounded bg-success/20 text-success font-bold">
-                          -{cavemanTestResult.savedPct}% saved
+                          {t('-{pct}% saved', { pct: cavemanTestResult.savedPct })}
                         </span>
                       {/if}
                     </div>
@@ -1794,7 +1797,7 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
                       onclick={() => copyToClipboard(cavemanTestResult?.text || '')}
                       class="absolute top-2 right-2 px-2 py-1 rounded bg-surface-2 border border-border text-[10px] text-text-muted hover:text-text-main cursor-pointer"
                     >
-                      Copy
+                      {t('Copy')}
                     </button>
                   </div>
                 </div>
@@ -1810,7 +1813,7 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
       <div class="flex items-center justify-between gap-4">
         <div class="flex min-w-0 flex-wrap items-center gap-2">
           <p class="font-medium">
-            Lazy senior dev{' '}
+            {t('Lazy senior dev')}{' '}
             <a
               href="https://github.com/DietrichGebert/ponytail"
               target="_blank"
@@ -1821,7 +1824,7 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
             </a>
           </p>
           <span class="text-xs px-2 py-0.5 rounded font-medium {ponytailEnabled ? `bg-success/15 text-success` : 'bg-surface-3 text-text-muted'}">
-            {ponytailEnabled ? `Active (${ponytailLevel})` : 'Disabled'}
+            {ponytailEnabled ? t('Active ({level})', { level: ponytailLevel }) : t('Disabled')}
           </span>
         </div>
         <div class="flex shrink-0 items-center gap-2">
@@ -1830,8 +1833,8 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
               type="button"
               onclick={() => (ponytailExpanded = !ponytailExpanded)}
               class="tap-target p-1.5 -m-1 rounded text-text-muted hover:text-text-main cursor-pointer transition-colors"
-              title={ponytailExpanded ? 'Hide settings' : 'Configure'}
-              aria-label={ponytailExpanded ? 'Hide Ponytail settings' : 'Configure Ponytail'}
+              title={ponytailExpanded ? t('Hide settings') : t('Configure')}
+              aria-label={ponytailExpanded ? t('Hide Ponytail settings') : t('Configure Ponytail')}
               aria-expanded={ponytailExpanded}
             >
               <span class="material-symbols-outlined text-base transition-transform {ponytailExpanded ? 'rotate-180' : ''}">
@@ -1846,14 +1849,14 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
         </div>
       </div>
       <p class="text-sm text-text-muted mt-1">
-        Bias the model toward minimal code: YAGNI, reuse stdlib, deletion over addition
+        {t('Bias the model toward minimal code: YAGNI, reuse stdlib, deletion over addition')}
       </p>
     </div>
 
     {#if ponytailEnabled && ponytailExpanded}
       <div class="py-3 px-4 rounded-lg bg-surface-2/40 border border-border mt-3 space-y-2">
         <div class="flex items-center justify-between flex-wrap gap-2">
-          <span class="text-xs font-medium text-text-muted">Ponytail Strategy:</span>
+          <span class="text-xs font-medium text-text-muted">{t('Ponytail Strategy:')}</span>
           <div class="flex items-center gap-1.5 flex-wrap">
             {#each PONYTAIL_LEVELS as lvl (lvl.id)}
               <button
@@ -1862,15 +1865,15 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
                 class="px-3 py-1.5 rounded text-xs font-medium border transition-colors cursor-pointer {ponytailLevel === lvl.id
                   ? 'bg-primary text-white border-primary shadow-sm'
                   : 'bg-surface-2 border-border text-text-muted hover:bg-surface-3'}"
-                title={lvl.desc}
+                title={t(lvl.desc)}
               >
-                {lvl.label}
+                {t(lvl.label)}
               </button>
             {/each}
           </div>
         </div>
         <p class="text-xs text-primary">
-          {PONYTAIL_LEVELS.find((lvl) => lvl.id === ponytailLevel)?.desc || ''}
+          {t(PONYTAIL_LEVELS.find((lvl) => lvl.id === ponytailLevel)?.desc || '')}
         </p>
       </div>
     {/if}
@@ -1880,7 +1883,7 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
       <div class="flex items-center justify-between gap-4">
         <div class="flex min-w-0 flex-wrap items-center gap-2">
           <p class="font-medium">
-            I have ADHD{' '}
+            {t('I have ADHD')}{' '}
             <a
               href="https://github.com/ayghri/i-have-adhd"
               target="_blank"
@@ -1891,7 +1894,7 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
             </a>
           </p>
           <span class="text-xs px-2 py-0.5 rounded font-medium {adhdEnabled ? `bg-success/15 text-success` : 'bg-surface-3 text-text-muted'}">
-            {adhdEnabled ? `Active (${adhdLevel})` : 'Disabled'}
+            {adhdEnabled ? t('Active ({level})', { level: adhdLevel }) : t('Disabled')}
           </span>
         </div>
         <div class="flex shrink-0 items-center gap-2">
@@ -1900,8 +1903,8 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
               type="button"
               onclick={() => (adhdExpanded = !adhdExpanded)}
               class="tap-target p-1.5 -m-1 rounded text-text-muted hover:text-text-main cursor-pointer transition-colors"
-              title={adhdExpanded ? 'Hide settings' : 'Configure'}
-              aria-label={adhdExpanded ? 'Hide ADHD settings' : 'Configure ADHD'}
+              title={adhdExpanded ? t('Hide settings') : t('Configure')}
+              aria-label={adhdExpanded ? t('Hide ADHD settings') : t('Configure ADHD')}
               aria-expanded={adhdExpanded}
             >
               <span class="material-symbols-outlined text-base transition-transform {adhdExpanded ? 'rotate-180' : ''}">
@@ -1916,14 +1919,14 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
         </div>
       </div>
       <p class="text-sm text-text-muted mt-1">
-        Action-first output style: lead with command/code, numbered bounded steps, one concrete next step under 2 mins, no fluff/preamble.
+        {t('Action-first output style: lead with command/code, numbered bounded steps, one concrete next step under 2 mins, no fluff/preamble.')}
       </p>
     </div>
 
     {#if adhdEnabled && adhdExpanded}
       <div class="py-3 px-4 rounded-lg bg-surface-2/40 border border-border mt-3 space-y-2">
         <div class="flex items-center justify-between flex-wrap gap-2">
-          <span class="text-xs font-medium text-text-muted">ADHD Style Intensity:</span>
+          <span class="text-xs font-medium text-text-muted">{t('ADHD Style Intensity:')}</span>
           <div class="flex items-center gap-1.5 flex-wrap">
             {#each ADHD_LEVELS as lvl (lvl.id)}
               <button
@@ -1932,15 +1935,15 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
                 class="px-3 py-1.5 rounded text-xs font-medium border transition-colors cursor-pointer {adhdLevel === lvl.id
                   ? 'bg-primary text-white border-primary shadow-sm'
                   : 'bg-surface-2 border-border text-text-muted hover:bg-surface-3'}"
-                title={lvl.desc}
+                title={t(lvl.desc)}
               >
-                {lvl.label}
+                {t(lvl.label)}
               </button>
             {/each}
           </div>
         </div>
         <p class="text-xs text-primary">
-          {ADHD_LEVELS.find((lvl) => lvl.id === adhdLevel)?.desc || ''}
+          {t(ADHD_LEVELS.find((lvl) => lvl.id === adhdLevel)?.desc || '')}
         </p>
       </div>
     {/if}
@@ -1949,9 +1952,9 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
     <div class="pt-4 mt-4 border-t border-border">
       <div class="flex items-center justify-between gap-4">
         <div class="flex min-w-0 flex-wrap items-center gap-2">
-          <p class="font-medium">Custom system prompt</p>
+          <p class="font-medium">{t('Custom system prompt')}</p>
           <span class="text-xs px-2 py-0.5 rounded font-medium {systemPromptEnabled ? 'bg-success/15 text-success' : 'bg-surface-3 text-text-muted'}">
-            {systemPromptEnabled ? 'Active' : 'Disabled'}
+            {systemPromptEnabled ? t('Active') : t('Disabled')}
           </span>
         </div>
         <div class="flex shrink-0 items-center gap-2">
@@ -1962,41 +1965,40 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
         </div>
       </div>
       <p class="text-sm text-text-muted mt-1">
-        Inject your own instruction into every request. The prefix leads the system prompt; the suffix lands after it, where
-        it survives a turn of untrusted content.
+        {t('Inject your own instruction into every request. The prefix leads the system prompt; the suffix lands after it, where it survives a turn of untrusted content.')}
       </p>
     </div>
 
     {#if systemPromptEnabled}
       <div class="py-3 px-4 rounded-lg bg-surface-2/40 border border-border mt-3 space-y-3">
         <div class="space-y-1">
-          <label class="text-xs font-medium text-text-muted" for="system-prompt-prefix">Prefix</label>
+          <label class="text-xs font-medium text-text-muted" for="system-prompt-prefix">{t('Prefix')}</label>
           <textarea
             id="system-prompt-prefix"
             bind:value={systemPromptPrefix}
             rows="2"
-            placeholder="House style, language, conventions — read before anything else"
+            placeholder={t('House style, language, conventions — read before anything else')}
             class="w-full px-3 py-2 rounded-lg bg-surface-1 border border-border text-sm font-mono resize-y focus:outline-none focus:ring-2 focus:ring-primary/40"
           ></textarea>
         </div>
         <div class="space-y-1">
-          <label class="text-xs font-medium text-text-muted" for="system-prompt-suffix">Suffix</label>
+          <label class="text-xs font-medium text-text-muted" for="system-prompt-suffix">{t('Suffix')}</label>
           <textarea
             id="system-prompt-suffix"
             bind:value={systemPromptSuffix}
             rows="2"
-            placeholder="Last word the model reads — e.g. always answer in Vietnamese"
+            placeholder={t('Last word the model reads — e.g. always answer in Vietnamese')}
             class="w-full px-3 py-2 rounded-lg bg-surface-1 border border-border text-sm font-mono resize-y focus:outline-none focus:ring-2 focus:ring-primary/40"
           ></textarea>
         </div>
         <div class="flex items-center justify-between gap-2 flex-wrap">
-          <p class="text-xs text-text-muted">Applied to chat, Responses and Claude requests alike.</p>
+          <p class="text-xs text-text-muted">{t('Applied to chat, Responses and Claude requests alike.')}</p>
           <button
             type="button"
             onclick={saveSystemPrompt}
             class="px-3 py-1.5 rounded text-xs font-medium bg-primary text-white hover:opacity-90 transition-opacity cursor-pointer"
           >
-            Save prompt
+            {t('Save prompt')}
           </button>
         </div>
       </div>
@@ -2007,14 +2009,14 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
       <div class="min-w-0 flex-1">
         <div class="flex items-center gap-2 flex-wrap">
           <p class="font-medium">
-            Prompt / Response Cache
+            {t('Prompt / Response Cache')}
           </p>
           <span class="text-xs px-2 py-0.5 rounded bg-primary/10 text-primary font-medium">
-            100% token savings
+            {t('100% token savings')}
           </span>
         </div>
         <p class="text-xs text-text-muted mt-1">
-          Exact-match prompt & response cache. Skips upstream calls completely on cache hit, eliminating 100% latency and tokens.
+          {t('Exact-match prompt & response cache. Skips upstream calls completely on cache hit, eliminating 100% latency and tokens.')}
         </p>
       </div>
 
@@ -2033,7 +2035,7 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
       <div class="mt-3 p-3 rounded-lg bg-surface-2 border border-border/50 space-y-3">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
           <div>
-            <label for="cache-ttl" class="text-text-muted block mb-1">Cache TTL (minutes)</label>
+            <label for="cache-ttl" class="text-text-muted block mb-1">{t('Cache TTL (minutes)')}</label>
             <input
               id="cache-ttl"
               type="number"
@@ -2044,7 +2046,7 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
             />
           </div>
           <div>
-            <label for="cache-max-entries" class="text-text-muted block mb-1">Max Entries (Capacity)</label>
+            <label for="cache-max-entries" class="text-text-muted block mb-1">{t('Max Entries (Capacity)')}</label>
             <input
               id="cache-max-entries"
               type="number"
@@ -2063,12 +2065,12 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
 <!-- MODAL: Headroom Setup & Configuration -->
 <Modal
   isOpen={isHeadroomModalOpen}
-  title={headroomRunning ? 'Headroom' : 'Setup Headroom'}
+  title={headroomRunning ? 'Headroom' : t('Setup Headroom')}
   onClose={() => (isHeadroomModalOpen = false)}
 >
   <div class="flex flex-col gap-4">
     <div class="flex items-center justify-between text-sm">
-      <span>Status</span>
+      <span>{t('Status')}</span>
       <span class={headroomActive ? 'text-success font-medium' : 'text-warning font-medium'}>
         {headroomStatusLabel}
       </span>
@@ -2081,13 +2083,13 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
         rel="noreferrer"
         class="w-full rounded border border-border px-4 py-2 text-center text-sm hover:bg-surface-2 transition-colors text-text-main block font-medium"
       >
-        Open Headroom Dashboard
+        {t('Open Headroom Dashboard')}
       </a>
     {/if}
 
     <div class="flex flex-col gap-1">
-      <p class="text-sm font-medium">Compression engine</p>
-      <div class="flex gap-2" role="group" aria-label="Compression engine">
+      <p class="text-sm font-medium">{t('Compression engine')}</p>
+      <div class="flex gap-2" role="group" aria-label={t('Compression engine')}>
         <button
           type="button"
           onclick={() => handleHeadroomEngineChange('builtin')}
@@ -2096,8 +2098,8 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
             ? 'border-primary bg-primary/10 text-text-main'
             : 'border-border bg-surface-2 text-text-muted hover:bg-surface-3'}"
         >
-          <span class="font-medium block">Built-in</span>
-          <span class="text-xs text-text-muted">In-process, no install</span>
+          <span class="font-medium block">{t('Built-in')}</span>
+          <span class="text-xs text-text-muted">{t('In-process, no install')}</span>
         </button>
         <button
           type="button"
@@ -2107,17 +2109,16 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
             ? 'border-primary bg-primary/10 text-text-main'
             : 'border-border bg-surface-2 text-text-muted hover:bg-surface-3'}"
         >
-          <span class="font-medium block">External proxy</span>
-          <span class="text-xs text-text-muted">Needs headroom-ai + URL</span>
+          <span class="font-medium block">{t('External proxy')}</span>
+          <span class="text-xs text-text-muted">{t('Needs headroom-ai + URL')}</span>
         </button>
       </div>
       <p class="text-xs text-text-muted">
-        Built-in compresses in this process — nothing to install, no extra round trip. The
-        external proxy adds semantic compression but must be running at the URL below.
+        {t('Built-in compresses in this process — nothing to install, no extra round trip. The external proxy adds semantic compression but must be running at the URL below.')}
       </p>
     </div>
     <div class="flex flex-col gap-1">
-      <p class="text-sm font-medium">Proxy URL</p>
+      <p class="text-sm font-medium">{t('Proxy URL')}</p>
       <input
         type="text"
         bind:value={headroomUrl}
@@ -2126,12 +2127,12 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
         class="w-full px-3 py-2 rounded-lg bg-surface-2 border border-border font-mono text-sm focus:outline-none focus:ring-1 focus:ring-primary text-text-main"
       />
       <p class="text-xs text-text-muted">
-        Use a local proxy for Start/Stop, or an external Docker sidecar like http://headroom:8787.
+        {t('Use a local proxy for Start/Stop, or an external Docker sidecar like http://headroom:8787.')}
       </p>
     </div>
 
     <div class="flex flex-col gap-1">
-      <p class="text-sm font-medium">Timeout (ms)</p>
+      <p class="text-sm font-medium">{t('Timeout (ms)')}</p>
       <input
         type="number"
         bind:value={headroomTimeoutMs}
@@ -2140,23 +2141,23 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
         class="w-full px-3 py-2 rounded-lg bg-surface-2 border border-border font-mono text-sm focus:outline-none focus:ring-1 focus:ring-primary text-text-main"
       />
       <p class="text-xs text-text-muted">
-        Request timeout in milliseconds. Defaults to 3000 ms.
+        {t('Request timeout in milliseconds. Defaults to 3000 ms.')}
       </p>
     </div>
 
     <div class="flex items-center justify-between py-2 border-t border-border">
       <div>
-        <p class="text-sm font-medium text-text-main">Autostart with 9router</p>
+        <p class="text-sm font-medium text-text-main">{t('Autostart with 9router')}</p>
         <p class="text-xs text-text-muted">
           {!headroomStatus?.installed
-            ? 'Requires Headroom to be installed first'
-            : 'Launch local Headroom proxy on 9router-go startup'}
+            ? t('Requires Headroom to be installed first')
+            : t('Launch local Headroom proxy on 9router-go startup')}
         </p>
       </div>
       <Toggle
         checked={headroomAutostart}
         disabled={!headroomStatus?.installed}
-        title={!headroomStatus?.installed ? 'Install Headroom first to enable autostart' : ''}
+        title={!headroomStatus?.installed ? t('Install Headroom first to enable autostart') : ''}
         onChange={() => handleToggleHeadroomAutostart(!headroomAutostart)}
       />
     </div>
@@ -2168,11 +2169,11 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
         fullWidth
         disabled={headroomActionLoading}
       >
-        {headroomActionLoading ? 'Stopping…' : 'Stop Headroom'}
+        {headroomActionLoading ? t('Stopping…') : t('Stop Headroom')}
       </Button>
     {:else if headroomRunning}
       <p class="text-sm text-success">
-        Headroom proxy is reachable. You can enable the token saver.
+        {t('Headroom proxy is reachable. You can enable the token saver.')}
       </p>
     {:else if headroomCanStart}
       <Button
@@ -2180,19 +2181,19 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
         fullWidth
         disabled={headroomActionLoading}
       >
-        {headroomActionLoading ? 'Starting…' : 'Start Headroom'}
+        {headroomActionLoading ? t('Starting…') : t('Start Headroom')}
       </Button>
     {:else if !headroomLocalUrl}
       <p class="text-sm text-warning">
-        Start Headroom separately at the configured URL, then recheck.
+        {t('Start Headroom separately at the configured URL, then recheck.')}
       </p>
     {:else if !headroomStatus.python}
       <p class="text-sm text-warning">
-        Python ≥ 3.10 required for local managed mode. Install Python first, or use an external proxy URL.
+        {t('Python ≥ 3.10 required for local managed mode. Install Python first, or use an external proxy URL.')}
       </p>
     {:else}
       <div class="flex flex-col gap-1">
-        <p class="text-sm font-medium">Install then click Start:</p>
+        <p class="text-sm font-medium">{t('Install then click Start:')}</p>
         <div class="flex items-center gap-2">
           <pre
             class="flex-1 rounded bg-black/5 dark:bg-white/5 p-2 text-xs font-mono overflow-x-auto text-text-main"
@@ -2202,7 +2203,7 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
             variant="ghost"
             onclick={copyInstallCommand}
           >
-            {copiedInstallCmd ? 'Copied' : 'Copy'}
+            {copiedInstallCmd ? t('Copied') : t('Copy')}
           </Button>
         </div>
       </div>
@@ -2218,13 +2219,13 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
         variant="ghost"
         fullWidth
       >
-        Recheck
+        {t('Recheck')}
       </Button>
       <Button
         onclick={() => (isHeadroomModalOpen = false)}
         fullWidth
       >
-        Done
+        {t('Done')}
       </Button>
     </div>
   </div>
@@ -2244,7 +2245,7 @@ f6e5d4c3b2a1   redis:7-alpine "docker-entrypoint.s…"   2 hours ago     Up 2 ho
           onclick={() => (extrasConfirm = null)}
           class="px-4 py-2 rounded-lg border border-border text-text-main hover:bg-surface-2 transition-colors text-sm font-medium cursor-pointer"
         >
-          Cancel
+          {t('Cancel')}
         </button>
         <button
           type="button"

@@ -1753,10 +1753,10 @@
                 checked={!hiddenNav.includes(entry.id)}
                 disabled={ALWAYS_VISIBLE_NAV_IDS.includes(entry.id)}
                 title={ALWAYS_VISIBLE_NAV_IDS.includes(entry.id)
-                  ? 'Always visible: this is the page the panel lives on'
-                  : 'Show or hide this entry in the sidebar'}
+                  ? t('Always visible: this is the page the panel lives on')
+                  : t('Show or hide this entry in the sidebar')}
                 size="sm"
-                label="{entry.label} in the sidebar"
+                label={t('{entry} in the sidebar', { entry: t(entry.label) })}
                 onChange={(val: boolean) => {
                   markLayoutEdit(() => (hiddenNav = setNavVisible(hiddenNav, entry.id, val)))
                 }}

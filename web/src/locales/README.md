@@ -10,23 +10,25 @@ Adding a language: add its id to `Locale` in `i18nDict.ts`, add an entry to
 
 Done: the shell (`lib/nav.ts`, `Sidebar.svelte`, `TopBar.svelte`,
 `LoginView.svelte`, the page titles `App.svelte` passes to the top bar),
-`ProfileSettingsView.svelte` and `QuotaTrackerView.svelte` (+ the empty-state
-copy in `components/quota/types.ts`).
+`ProfileSettingsView.svelte`, `QuotaTrackerView.svelte` (+ the empty-state copy in
+`components/quota/types.ts`), `EndpointView.svelte`, `ProxyPoolsView.svelte`,
+`JailbreakView.svelte`, `TokenSaverView.svelte`, `connections/ProviderDetailView.svelte`
+and `connections/AddConnectionModal.svelte`.
 
 Still English, roughly 1,800 candidate strings:
 
 | File | Strings |
 | --- | --- |
-| `components/connections/ProviderDetailView.svelte` | 193 |
-| `components/JailbreakView.svelte` | 170 |
-| `components/ProxyPoolsView.svelte` | 144 |
-| `components/EndpointView.svelte` | 142 |
-| `components/TokenSaverView.svelte` | 120 |
-| `components/connections/AddConnectionModal.svelte` | 84 |
+| `components/keys/ApiKeysTable.svelte` | 111 (the API Keys card inside Endpoint) |
 | `components/media/MediaProviderDetail.svelte` | 77 |
 | `components/CacheAnalyticsView.svelte` | 74 |
 | `components/keys/ApiKeyPolicyModal.svelte` | 64 |
 | `components/CompressionAnalyticsView.svelte` | 64 |
+| `components/security/SecurityPanel.svelte` | 48 |
+| `components/analytics/RequestDetailsTab.svelte` | 47 |
+| `components/media/MediaKindView.svelte` | 40 |
+| `components/combos/CombosView.svelte` | 38 |
+| `components/CombosView` modals | 30-40 each |
 
 `web/scripts/i18n-wrap.py <file> [--apply]` does the mechanical half: it wraps a
 whole text node or a `label`/`placeholder`/`title`/`aria-label` value in `t()`
