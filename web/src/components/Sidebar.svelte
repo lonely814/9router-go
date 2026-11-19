@@ -10,6 +10,7 @@
     loadSidebarPrefs,
   } from '../lib/sidebarPrefs.svelte'
   import { pinnedNavEntries } from '../lib/navFavorites.svelte'
+  import { t } from '../lib/i18n.svelte'
 
   export type { ActiveTab }
   let {
@@ -262,7 +263,7 @@
       >
         <span class="text-[11px] font-semibold text-green-700 dark:text-amber-400 flex items-center gap-1">
           <span class="material-symbols-outlined text-[14px]">arrow_upward</span>
-          <span class="truncate">New version available: v{updateInfo.latestVersion}</span>
+          <span class="truncate">{t('New version available: v{version}', { version: updateInfo.latestVersion ?? '' })}</span>
         </span>
         <div class="flex items-center gap-1.5">
           <button
@@ -270,16 +271,16 @@
             onclick={() => (showUpdateModal = true)}
             class="px-2 py-0.5 rounded bg-green-600 hover:bg-green-700 dark:bg-amber-500 dark:hover:bg-amber-600 text-white text-[11px] font-semibold transition-colors cursor-pointer shrink-0"
           >
-            Update now
+            {t('Update now')}
           </button>
           <button
             type="button"
             onclick={copyInstallCmd}
-            title="Copy install command"
+            title={t('Copy install command')}
             class="flex-1 text-left hover:opacity-80 transition-opacity cursor-pointer min-w-0"
           >
             <code class="block text-[10px] text-green-700 dark:text-amber-300 font-mono truncate bg-surface/70 px-1 py-0.5 rounded">
-              {copied ? '✓ copied!' : INSTALL_CMD}
+              {copied ? t('✓ copied!') : INSTALL_CMD}
             </code>
           </button>
         </div>
@@ -295,7 +296,7 @@
       <div class="{iconRail ? '' : 'pt-1'} space-y-0.5">
         {#if !iconRail}
           <p class="px-3 text-xs font-semibold text-text-muted/60 uppercase tracking-wider mb-2">
-            Pinned
+            {t('Pinned')}
           </p>
         {/if}
         {#each visiblePins as entry (entry.id)}
@@ -304,7 +305,7 @@
           <a
             href={TAB_ROUTES[entry.id]}
             onclick={(e) => handleNav(entry.id, e)}
-            title={iconRail ? entry.label : undefined}
+            title={iconRail ? t(entry.label) : undefined}
             class="flex items-center {iconRail
               ? 'justify-center'
               : 'gap-3'} px-3 py-1.5 rounded-lg transition-all group cursor-pointer {pinActive
@@ -317,7 +318,7 @@
                 : 'group-hover:text-primary transition-colors'}">{entry.icon}</span
             >
             {#if !iconRail}
-              <span class="text-[13px] flex-1">{entry.label}</span>
+              <span class="text-[13px] flex-1">{t(entry.label)}</span>
             {/if}
             {#if pinBadge && !iconRail}
               <span
@@ -364,7 +365,7 @@
             aria-expanded={groupOpen}
             class="w-full flex items-center gap-1.5 py-2.5 sm:py-0 px-3 mb-2 text-text-muted/60 uppercase tracking-wider cursor-pointer"
           >
-            <span class="text-xs font-semibold">{group.label}</span>
+            <span class="text-xs font-semibold">{t(group.label)}</span>
             <span
               class="material-symbols-outlined text-[14px] transition-transform duration-200 {groupOpen
                 ? ''
@@ -385,7 +386,7 @@
               type="button"
               onclick={() => toggleAccordion(entry.id)}
               aria-expanded={isOpen}
-              title={iconRail ? entry.label : undefined}
+              title={iconRail ? t(entry.label) : undefined}
               class="w-full flex items-center {iconRail
                 ? 'justify-center'
                 : 'gap-3'} px-3 py-2.5 sm:py-1.5 rounded-lg transition-all group cursor-pointer {accordionActive
@@ -394,7 +395,7 @@
             >
               <span class="material-symbols-outlined text-[18px]">{entry.icon}</span>
               {#if !iconRail}
-                <span class="text-[13px] flex-1 text-left">{entry.label}</span>
+                <span class="text-[13px] flex-1 text-left">{t(entry.label)}</span>
                 <span
                   class="material-symbols-outlined text-[14px] transition-transform duration-200"
                   style:transform={isOpen ? 'rotate(180deg)' : 'rotate(0deg)'}
@@ -421,7 +422,7 @@
                     >
                       {child.icon}
                     </span>
-                    <span class="text-[13px]">{child.label}</span>
+                    <span class="text-[13px]">{t(child.label)}</span>
                   </a>
                 {/each}
               </div>
@@ -432,7 +433,7 @@
             <a
               href={TAB_ROUTES[entry.id]}
               onclick={(e) => handleNav(entry.id, e)}
-              title={iconRail ? entry.label : undefined}
+              title={iconRail ? t(entry.label) : undefined}
               class="flex items-center {iconRail
                 ? 'justify-center'
                 : 'gap-3'} px-3 py-2.5 sm:py-1.5 rounded-lg transition-all group cursor-pointer {active
@@ -447,7 +448,7 @@
                 {entry.icon}
               </span>
               {#if !iconRail}
-                <span class="text-[13px] flex-1">{entry.label}</span>
+                <span class="text-[13px] flex-1">{t(entry.label)}</span>
               {/if}
               {#if badge && !iconRail}
                 <span
@@ -473,16 +474,16 @@
         class="p-2.5 rounded-[10px] bg-surface border border-border-subtle flex items-center justify-between"
       >
         <div class="min-w-0">
-          <p class="text-[11px] text-text-muted uppercase tracking-wide">Providers</p>
+          <p class="text-[11px] text-text-muted uppercase tracking-wide">{t('Providers')}</p>
           <p class="text-xs font-semibold text-text-main mt-0.5 truncate">
-            {activeConnections} <span class="text-text-muted font-normal">/ {totalConnections} active</span>
+            {activeConnections} <span class="text-text-muted font-normal">/ {totalConnections} {t('active')}</span>
           </p>
         </div>
         <span class="material-symbols-outlined text-primary text-[18px]">radio_button_checked</span>
       </div>
     </div>
   {:else}
-    <div class="p-2 border-t border-border-subtle shrink-0 flex justify-center" title="{activeConnections} / {totalConnections} active">
+    <div class="p-2 border-t border-border-subtle shrink-0 flex justify-center" title="{activeConnections} / {totalConnections} {t('active')}">
       <span class="material-symbols-outlined text-primary text-[18px]">radio_button_checked</span>
     </div>
   {/if}

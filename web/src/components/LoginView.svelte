@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount, tick } from 'svelte'
   import { api } from '../api/client'
+  import { t } from '../lib/i18n.svelte'
 
   let {
     onSuccess,
@@ -62,9 +63,9 @@
         authMode = data.authMode || 'password'
         ssoType = data.ssoType || 'oidc'
         oidcConfigured = data.oidcConfigured === true
-        oidcLoginLabel = data.oidcLoginLabel || 'Sign in with OIDC'
+        oidcLoginLabel = data.oidcLoginLabel || t('Sign in with OIDC')
         samlConfigured = data.samlConfigured === true
-        samlLoginLabel = data.samlLoginLabel || 'Sign in with SAML SSO'
+        samlLoginLabel = data.samlLoginLabel || t('Sign in with SAML SSO')
         // The form only exists once hasPassword has left null, so focus it as
         // soon as the state that reveals it has been applied.
         tick().then(focusPasswordField)
@@ -112,7 +113,7 @@
           window.location.assign('/dashboard')
         }
       } else {
-        errorMessage = res.error || 'Invalid password'
+        errorMessage = res.error || t('Invalid password')
       }
     } catch (err: unknown) {
       const failure = err as LoginFailure
@@ -121,9 +122,9 @@
         // login attempt never issues a session, so set the new password from
         // the local host (or set INITIAL_PASSWORD) before retrying.
         mustChange = true
-        errorMessage = err instanceof Error ? err.message : 'Default password must be changed before remote access.'
+        errorMessage = err instanceof Error ? err.message : t('Default password must be changed before remote access.')
       } else {
-        errorMessage = err instanceof Error ? err.message : 'Invalid password'
+        errorMessage = err instanceof Error ? err.message : t('Invalid password')
         if (typeof failure?.retryAfter === 'number') retryAfter = failure.retryAfter
         if (typeof failure?.resetHint === 'string') resetHint = failure.resetHint
       }
@@ -149,10 +150,10 @@
           window.location.assign('/dashboard')
         }
       } else {
-        errorMessage = res.error || 'Failed to set password'
+        errorMessage = res.error || t('Failed to set password')
       }
     } catch (err: unknown) {
-      errorMessage = err instanceof Error ? err.message : 'Failed to set password'
+      errorMessage = err instanceof Error ? err.message : t('Failed to set password')
     } finally {
       isLoading = false
     }
@@ -181,7 +182,7 @@
     {#if hasPassword === null}
       <div class="text-center">
         <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        <p class="text-text-muted mt-4">Loading...</p>
+        <p class="text-text-muted mt-4">{t('Loading...')}</p>
       </div>
     {:else}
       <div class="text-center mb-8 flex flex-col items-center">
@@ -191,11 +192,11 @@
         <h1 class="text-3xl font-bold text-primary mb-2">9router-go</h1>
         <p class="text-text-muted">
           {#if samlAvailable}
-            Sign in with SAML 2.0 Single Sign-On
+            {t('Sign in with SAML 2.0 Single Sign-On')}
           {:else if oidcAvailable}
-            Sign in with your OIDC provider to access the dashboard
+            {t('Sign in with your OIDC provider to access the dashboard')}
           {:else}
-            Enter your password to access the dashboard
+            {t('Enter your password to access the dashboard')}
           {/if}
         </p>
       </div>
@@ -204,14 +205,14 @@
         {#if mustChange}
           <form onsubmit={handleSetNewPassword} class="flex flex-col gap-4">
             <p class="text-sm text-amber-600 dark:text-amber-400 text-center">
-              Set a new password before accessing the dashboard remotely.
+              {t('Set a new password before accessing the dashboard remotely.')}
             </p>
             <div class="flex flex-col gap-2">
-              <label for="login-new-password" class="text-sm font-medium text-text-main">New password</label>
+              <label for="login-new-password" class="text-sm font-medium text-text-main">{t('New password')}</label>
               <input
                 id="login-new-password"
                 type="password"
-                placeholder="Enter new password"
+                placeholder={t('Enter new password')}
                 bind:value={newPassword}
                 required
                 data-login-focus
@@ -228,9 +229,9 @@
             >
               {#if isLoading}
                 <span class="inline-block animate-spin rounded-full h-4 w-4 border-2 border-white/20 border-t-white"></span>
-                <span>Setting password...</span>
+                <span>{t('Setting password...')}</span>
               {:else}
-                <span>Set password</span>
+                <span>{t('Set password')}</span>
               {/if}
             </button>
           </form>
@@ -264,23 +265,23 @@
               <form onsubmit={handleSubmit} class="flex flex-col gap-4">
                 {#if isSsoEnabled && !ssoAvailable}
                   <p class="text-xs text-amber-600 dark:text-amber-400 text-center">
-                    {activeSsoType === 'saml' ? 'SAML SSO' : 'OIDC'} login is enabled, but configuration is incomplete. Password login is still available for recovery.
+                    {t('{provider} login is enabled, but configuration is incomplete. Password login is still available for recovery.', { provider: activeSsoType === 'saml' ? 'SAML SSO' : 'OIDC' })}
                   </p>
                 {/if}
 
                 {#if authMode === 'both' && ssoAvailable}
                   <p class="text-xs text-text-muted text-center">
-                    Password and {activeSsoType === 'saml' ? 'SAML SSO' : 'OIDC'} login are both enabled.
+                    {t('Password and {provider} login are both enabled.', { provider: activeSsoType === 'saml' ? 'SAML SSO' : 'OIDC' })}
                   </p>
                 {/if}
 
                 <div class="flex flex-col gap-2">
-                  <label for="login-password" class="text-sm font-medium text-text-main">Password</label>
+                  <label for="login-password" class="text-sm font-medium text-text-main">{t('Password')}</label>
                   <div class="relative">
                     <input
                       id="login-password"
                       type={showPassword ? 'text' : 'password'}
-                      placeholder="Enter password"
+                      placeholder={t('Enter password')}
                       bind:value={password}
                       required
                       data-login-focus
@@ -290,7 +291,7 @@
                       type="button"
                       onclick={() => (showPassword = !showPassword)}
                       class="absolute inset-y-0 right-0 flex items-center pr-3 text-text-muted hover:text-text-main transition-colors cursor-pointer"
-                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      aria-label={t(showPassword ? 'Hide password' : 'Show password')}
                     >
                       <span class="material-symbols-outlined text-[20px]">
                         {showPassword ? 'visibility_off' : 'visibility'}
@@ -317,20 +318,20 @@
                 >
                   {#if isLoading}
                     <span class="inline-block animate-spin rounded-full h-4 w-4 border-2 border-white/20 border-t-white"></span>
-                    <span>Logging in...</span>
+                    <span>{t('Logging in...')}</span>
                   {:else if retryAfter > 0}
-                    <span>Wait {retryAfter}s</span>
+                    <span>{t('Wait {seconds}s', { seconds: retryAfter })}</span>
                   {:else}
-                    <span>Login</span>
+                    <span>{t('Login')}</span>
                   {/if}
                 </button>
 
                 <p class="text-xs text-center text-text-muted mt-2">
-                  Default password is <code class="bg-surface-2 px-1.5 py-0.5 rounded text-text-main font-mono">123456</code>
+                  {t('Default password is')} <code class="bg-surface-2 px-1.5 py-0.5 rounded text-text-main font-mono">123456</code>
                 </p>
                 {#if hasPassword === false}
                   <p class="text-xs text-center text-amber-600 dark:text-amber-400">
-                    Security risk: no password set. You will be asked to set one when logging in remotely.
+                    {t('Security risk: no password set. You will be asked to set one when logging in remotely.')}
                   </p>
                 {/if}
               </form>

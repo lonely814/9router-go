@@ -80,6 +80,13 @@
     type DisplayCurrency
   } from '../lib/currency'
   import { setDisplayCurrency } from '../lib/currency.svelte'
+  import {
+    SUPPORTED_LOCALES,
+    getLocale,
+    setLocale,
+    t,
+    type Locale,
+  } from '../lib/i18n.svelte'
 
   interface Props {
     settings?: Settings
@@ -241,6 +248,9 @@
   let comboStrategy = $state('first-model')
   let forceFallback = $state(false)
   let qoderCheckin = $state(false)
+  // The picker is the one place that shows the active locale; reading it in
+  // $derived keeps it in step with a switch made in another tab.
+  let locale = $derived(getLocale())
 
   // Feature Visibility: ids of the sidebar entries this deployment hides. The
   // entry list itself lives in web/src/lib/nav.ts, shared with the sidebar.
@@ -252,7 +262,7 @@
   // read-back the Usage panel list does, so "Custom" means the same thing here.
   let navPreset = $derived(activeNavPreset(hiddenNav))
   let navPresetHint = $derived(
-    NAV_PRESETS.find((preset) => preset.id === navPreset)?.hint ?? 'A selection of your own'
+    t(NAV_PRESETS.find((preset) => preset.id === navPreset)?.hint ?? 'A selection of your own')
   )
   // A visibility change is not saved until the operator presses Save, so the
   // button is offered on its own for a few seconds after a change.
@@ -1533,6 +1543,24 @@
       </div>
       <div class="flex items-center justify-between gap-3 border-t border-border pt-3">
         <div class="min-w-0">
+          <p class="text-xs font-semibold text-text-main">{t('Language')}</p>
+          <p class="text-[11px] text-text-subtle">
+            {t('Untranslated pages stay in English.')}
+          </p>
+        </div>
+        <select
+          id="dashboard-locale"
+          value={locale}
+          onchange={(event) => setLocale((event.currentTarget as HTMLSelectElement).value as Locale)}
+          class="shrink-0 rounded-lg border border-border bg-bg px-2 py-1 text-xs text-text-main focus:outline-none focus:border-brand-500 cursor-pointer"
+        >
+          {#each SUPPORTED_LOCALES as option (option.id)}
+            <option value={option.id}>{option.label}</option>
+          {/each}
+        </select>
+      </div>
+      <div class="flex items-center justify-between gap-3 border-t border-border pt-3">
+        <div class="min-w-0">
           <p class="text-xs font-semibold text-text-main">Animation level</p>
           <p class="text-[11px] text-text-subtle">
             How much the dashboard animates. Minimal drops blur and transitions but
@@ -1659,9 +1687,9 @@
           >
             <!-- Shown only while the switches match no preset: a selection of
                  one's own is a state to read, not one to pick. -->
-            <option value="custom" disabled>Custom</option>
+            <option value="custom" disabled>{t('Custom')}</option>
             {#each NAV_PRESETS as preset (preset.id)}
-              <option value={preset.id} title={preset.hint}>{preset.label}</option>
+              <option value={preset.id} title={t(preset.hint)}>{t(preset.label)}</option>
             {/each}
           </select>
           <p class="text-[11px] text-text-subtle">{navPresetHint}</p>
@@ -1809,7 +1837,7 @@
                  one's own is a state to read, not one to pick. -->
             <option value="custom" disabled>Custom</option>
             {#each USAGE_PANEL_PRESETS as preset (preset.id)}
-              <option value={preset.id} title={preset.hint}>{preset.label}</option>
+              <option value={preset.id} title={t(preset.hint)}>{t(preset.label)}</option>
             {/each}
           </select>
         </div>

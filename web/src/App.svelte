@@ -49,6 +49,7 @@
   import { loadPinnedNavEntries } from './lib/navFavorites.svelte'
   import { setDisplayCurrency } from './lib/currency.svelte'
   import { applyAnimationLevel } from './lib/displayPrefs'
+  import { t } from './lib/i18n.svelte'
 
   let activeTab = $state<ActiveTab>(
     typeof window !== 'undefined' ? pathToTab(window.location.pathname) : 'endpoint'
@@ -521,8 +522,8 @@
 
       <TopBar
         {activeTab}
-        pageTitle={pageMeta[activeTab]?.title}
-        pageDescription={pageMeta[activeTab]?.description}
+        pageTitle={pageMeta[activeTab] ? t(pageMeta[activeTab].title) : undefined}
+        pageDescription={pageMeta[activeTab] ? t(pageMeta[activeTab].description) : undefined}
         selectedProvider={selectedProviderMeta}
         onBackToProviders={() => navigate('connections', false, null)}
         onMenuClick={() => (isMobileMenuOpen = !isMobileMenuOpen)}
