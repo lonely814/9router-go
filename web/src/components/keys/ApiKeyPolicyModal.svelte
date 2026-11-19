@@ -1,6 +1,7 @@
 <script lang="ts">
   import { api, type APIKey, type ApiKeyBudget, type APIKeyPolicy, type Combo, type Plan, type ProviderConnection, type ProviderNode } from '../../api/client'
   import { Loader2, Save, X } from 'lucide-svelte'
+  import { t } from '../../lib/i18n.svelte'
   import { isNavEntryHidden } from '../../lib/navVisibility.svelte'
   import { formatTokenAmount, parseTokenAmount } from '../../lib/tokenUnits'
   import ModelPickerModal from '../combos/ModelPickerModal.svelte'
@@ -123,7 +124,7 @@
     if (!trimmed) return 0
     const parsed = parseTokenAmount(trimmed)
     if (parsed === null) {
-      error = `${label} is not a token amount. Use a number, or a scale like 500K, 2M or 1B.`
+      error = t('{label} is not a token amount. Use a number, or a scale like 500K, 2M or 1B.', { label })
       return null
     }
     return parsed
@@ -142,7 +143,9 @@
       hasLoadedModels = true
       error = null
     } catch (err) {
-      error = `Could not load the model allowlist: ${err instanceof Error ? err.message : String(err)}. Saving the policy will not change the allowlist — press Reload first.`
+      error = t('Could not load the model allowlist: {detail}. Saving the policy will not change the allowlist — press Reload first.', {
+        detail: err instanceof Error ? err.message : String(err),
+      })
     } finally {
       isLoadingModels = false
     }
@@ -226,6 +229,15 @@
     }
   }
 
+  // The period select stores a lowercase id; the sentence above it names the
+  // period in prose, so the id is mapped to the same label the option shows.
+  const periodLabels: { [key: string]: string } = {
+    daily: 'Daily',
+    weekly: 'Weekly',
+    monthly: 'Monthly',
+    total: 'Total — never resets',
+  }
+
   // Micros to dollars, two decimals, the same shape PlansView uses.
   function fmtMicros(micros: number): string {
     return `$${(micros / 1_000_000).toFixed(2)}`
@@ -257,11 +269,11 @@
       try {
         const parsed = JSON.parse(metadataValue)
         if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
-          error = 'Metadata must be a JSON object, e.g. {"customerId":"acme"}'
+          error = t('Metadata must be a JSON object, e.g. {"customerId":"acme"}')
           return
         }
       } catch {
-        error = 'Metadata is not valid JSON'
+        error = t('Metadata is not valid JSON')
         return
       }
     }
@@ -274,19 +286,19 @@
     // told to retry rather than being shown a success that lost data.
     if (!hasLoadedModels) {
       error = isLoadingModels
-        ? 'Still loading the model allowlist — try Save again in a moment.'
-        : 'The model allowlist could not be read, so saving now could erase it. Press Reload, then Save.'
+        ? t('Still loading the model allowlist — try Save again in a moment.')
+        : t('The model allowlist could not be read, so saving now could erase it. Press Reload, then Save.')
       return
     }
 
     try {
       isSaving = true
-      const quota = tokenAmount(tokenQuota, 'Lifetime token quota')
+      const quota = tokenAmount(tokenQuota, t('Lifetime token quota'))
       if (quota === null) {
         isSaving = false
         return
       }
-      const context = tokenAmount(contextLimit, 'Context limit')
+      const context = tokenAmount(contextLimit, t('Context limit'))
       if (context === null) {
         isSaving = false
         return
@@ -299,19 +311,19 @@
       if (rawUsd) {
         const parsed = Number.parseFloat(rawUsd)
         if (Number.isNaN(parsed) || parsed < 0 || !Number.isFinite(parsed)) {
-          error = 'Period budget is not a dollar amount. Use a number like 25 or 25.50.'
+          error = t('Period budget is not a dollar amount. Use a number like 25 or 25.50.')
           isSaving = false
           return
         }
         budgetMicros = Math.round(parsed * 1e6)
       }
-      const periodTokens = tokenAmount(budgetLimitTokens, 'Period token budget')
+      const periodTokens = tokenAmount(budgetLimitTokens, t('Period token budget'))
       if (periodTokens === null) {
         isSaving = false
         return
       }
       if (!Number.isFinite(alertPct) || alertPct < 0 || alertPct > 100) {
-        error = 'Alert percentage must be between 0 and 100.'
+        error = t('Alert percentage must be between 0 and 100.')
         isSaving = false
         return
       }
@@ -373,14 +385,14 @@
     <div class="sticky top-0 bg-surface-2 border-b border-border px-6 py-4 flex items-center justify-between z-10">
       <div class="min-w-0">
         <h2 class="font-headline text-sm font-bold text-text-main truncate">
-          Policy — {apiKey.name || apiKey.keyDisplay || apiKey.key}
+          {t('Policy')} — {apiKey.name || apiKey.keyDisplay || apiKey.key}
         </h2>
         <p class="font-code text-[10px] text-text-subtle truncate">{apiKey.id}</p>
       </div>
       <button
         type="button"
         onclick={onClose}
-        aria-label="Close policy dialog"
+        aria-label={t('Close policy dialog')}
         class="p-1.5 rounded-lg text-text-subtle hover:text-text-main hover:bg-surface-3 transition cursor-pointer"
       >
         <X class="w-4 h-4" />
@@ -393,9 +405,9 @@
            the row falls back to the masked token. -->
       <section class="space-y-3">
         <div>
-          <h3 class="font-headline text-xs font-bold text-text-main">Name</h3>
+          <h3 class="font-headline text-xs font-bold text-text-main">{t('Name')}</h3>
           <p class="text-text-subtle mt-0.5">
-            Shown in this dashboard only. Clearing it falls back to the masked token.
+            {t('Shown in this dashboard only. Clearing it falls back to the masked token.')}
           </p>
         </div>
         <input
@@ -403,8 +415,8 @@
           type="text"
           bind:value={name}
           maxlength="200"
-          placeholder="Client Token"
-          aria-label="Key name"
+          placeholder={t('Client Token')}
+          aria-label={t('Key name')}
           class="w-full bg-surface border border-border rounded-lg px-3 py-2 text-xs text-text-main focus:outline-none focus:border-brand-500"
         />
       </section>
@@ -415,27 +427,27 @@
       {#if !plansHidden}
         <section class="space-y-3">
           <div>
-            <h3 class="font-headline text-xs font-bold text-text-main">Plan</h3>
+            <h3 class="font-headline text-xs font-bold text-text-main">{t('Plan')}</h3>
             <p class="text-text-subtle mt-0.5">
-              The key inherits this plan's limits as defaults. Any limit set below overrides the plan.
-              Choose <span class="font-code">No plan</span> to detach the key.
+              {t("The key inherits this plan's limits as defaults. Any limit set below overrides the plan.")}
+              {t('Choose')} <span class="font-code">{t('No plan')}</span> {t('to detach the key.')}
             </p>
           </div>
           <select
             bind:value={planId}
-            aria-label="Plan"
+            aria-label={t('Plan')}
             class="w-full bg-surface border border-border rounded-lg px-3 py-2 text-xs text-text-main focus:outline-none focus:border-brand-500"
           >
-            <option value="">No plan — this key's own columns only</option>
+            <option value="">{t('No plan — this key\'s own columns only')}</option>
             {#each plans as plan (plan.id)}
               <option value={plan.id}>{plan.name}</option>
             {/each}
           </select>
           {#if isLoadingPlans}
-            <p class="text-text-subtle text-[11px]">Loading plans…</p>
+            <p class="text-text-subtle text-[11px]">{t('Loading plans…')}</p>
           {:else if plans.length === 0}
             <p class="text-text-subtle text-[11px]">
-              No plans defined yet. Create one on the Plans page.
+              {t('No plans defined yet. Create one on the Plans page.')}
             </p>
           {/if}
         </section>
@@ -444,17 +456,16 @@
       <!-- Rate limits -->
       <section class="space-y-3">
         <div>
-          <h3 class="font-headline text-xs font-bold text-text-main">Rate limits</h3>
+          <h3 class="font-headline text-xs font-bold text-text-main">{t('Rate limits')}</h3>
           <p class="text-text-subtle mt-0.5">
-            Applied per key. <span class="font-code">0</span> means unlimited — a rejected request
-            returns 429 with <span class="font-code">Retry-After</span> and never reaches the provider.
+            {t('Applied per key.')} <span class="font-code">0</span> {t('means unlimited — a rejected request returns 429 with')} <span class="font-code">Retry-After</span> {t('and never reaches the provider.')}
           </p>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <label for="pol-rpm" class="block font-semibold text-text-muted mb-1">
-              Requests / minute
+              {t('Requests / minute')}
             </label>
             <input
               id="pol-rpm"
@@ -467,7 +478,7 @@
           </div>
           <div>
             <label for="pol-tpm" class="block font-semibold text-text-muted mb-1">
-              Tokens / minute
+              {t('Tokens / minute')}
             </label>
             <input
               id="pol-tpm"
@@ -480,7 +491,7 @@
           </div>
           <div>
             <label for="pol-conc" class="block font-semibold text-text-muted mb-1">
-              Concurrency
+              {t('Concurrency')}
             </label>
             <input
               id="pol-conc"
@@ -496,7 +507,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label for="pol-quota" class="block font-semibold text-text-muted mb-1">
-              Lifetime token quota
+              {t('Lifetime token quota')}
             </label>
             <input
               id="pol-quota"
@@ -507,13 +518,12 @@
               class="w-full bg-surface border border-border rounded-lg px-3 py-2 font-code text-xs text-text-main focus:outline-none focus:border-brand-500"
             />
             <p class="text-text-subtle mt-1">
-              Total prompt + completion tokens for the key's lifetime. Accepts a number or a scale
-              (500K, 2M, 1B). Once spent, requests are refused with 429.
+              {t("Total prompt + completion tokens for the key's lifetime. Accepts a number or a scale (500K, 2M, 1B). Once spent, requests are refused with 429.")}
             </p>
           </div>
           <div>
             <label for="pol-queue" class="block font-semibold text-text-muted mb-1">
-              Queue timeout (ms)
+              {t('Queue timeout (ms)')}
             </label>
             <input
               id="pol-queue"
@@ -524,8 +534,7 @@
               class="w-full bg-surface border border-border rounded-lg px-3 py-2 font-code text-xs text-text-main focus:outline-none focus:border-brand-500"
             />
             <p class="text-text-subtle mt-1">
-              How long a request waits for a free concurrency slot before it is refused with 429.
-              Leave 0 for the server default.
+              {t('How long a request waits for a free concurrency slot before it is refused with 429. Leave 0 for the server default.')}
             </p>
           </div>
         </div>
@@ -537,7 +546,7 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label for="pol-bud-usd" class="block font-semibold text-text-muted mb-1">
-                Cost budget ($)
+                {t('Cost budget ($)')}
               </label>
               <input
                 id="pol-bud-usd"
@@ -548,12 +557,14 @@
                 class="w-full bg-surface border border-border rounded-lg px-3 py-2 font-code text-xs text-text-main focus:outline-none focus:border-brand-500"
               />
               <p class="text-text-subtle mt-1">
-                USD the key may spend each {budgetPeriod}. Blank = no cost limit.
+                {t('USD the key may spend each {period}. Blank = no cost limit.', {
+                  period: t(periodLabels[budgetPeriod] ?? budgetPeriod),
+                })}
               </p>
             </div>
             <div>
               <label for="pol-bud-tok" class="block font-semibold text-text-muted mb-1">
-                Token budget
+                {t('Token budget')}
               </label>
               <input
                 id="pol-bud-tok"
@@ -563,7 +574,7 @@
                 class="w-full bg-surface border border-border rounded-lg px-3 py-2 font-code text-xs text-text-main focus:outline-none focus:border-brand-500"
               />
               <p class="text-text-subtle mt-1">
-                Prompt + completion tokens per period. Blank = no token limit.
+                {t('Prompt + completion tokens per period. Blank = no token limit.')}
               </p>
             </div>
           </div>
@@ -571,22 +582,22 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label for="pol-bud-period" class="block font-semibold text-text-muted mb-1">
-                Period
+                {t('Period')}
               </label>
               <select
                 id="pol-bud-period"
                 bind:value={budgetPeriod}
                 class="w-full bg-surface border border-border rounded-lg px-3 py-2 text-xs text-text-main focus:outline-none focus:border-brand-500"
               >
-                <option value="daily">Daily</option>
-                <option value="weekly">Weekly</option>
-                <option value="monthly">Monthly</option>
-                <option value="total">Total — never resets</option>
+                <option value="daily">{t('Daily')}</option>
+                <option value="weekly">{t('Weekly')}</option>
+                <option value="monthly">{t('Monthly')}</option>
+                <option value="total">{t('Total — never resets')}</option>
               </select>
             </div>
             <div>
               <label for="pol-bud-alert" class="block font-semibold text-text-muted mb-1">
-                Alert at (%)
+                {t('Alert at (%)')}
               </label>
               <input
                 id="pol-bud-alert"
@@ -597,7 +608,7 @@
                 class="w-full bg-surface border border-border rounded-lg px-3 py-2 font-code text-xs text-text-main focus:outline-none focus:border-brand-500"
               />
               <p class="text-text-subtle mt-1">
-                Warn at this share of the budget. 0 = no warning.
+                {t('Warn at this share of the budget. 0 = no warning.')}
               </p>
             </div>
           </div>
@@ -605,37 +616,43 @@
           <label class="flex items-start gap-2 cursor-pointer">
             <input type="checkbox" bind:checked={hardCutoff} class="mt-0.5" />
             <span>
-              <span class="block font-semibold text-text-muted">Refuse when exhausted (402)</span>
+              <span class="block font-semibold text-text-muted">{t('Refuse when exhausted (402)')}</span>
               <span class="text-text-subtle block">
-                Off = keep serving past the limit with a warning header only.
+                {t('Off = keep serving past the limit with a warning header only.')}
               </span>
             </span>
           </label>
 
           {#if couldBeArmed}
             {#if budgetLoadError}
-              <p class="text-text-subtle text-[11px]">Could not load period spend.</p>
+              <p class="text-text-subtle text-[11px]">{t('Could not load period spend.')}</p>
             {:else if budget?.armed}
               <div class="mt-2 space-y-1 rounded-lg border border-border bg-surface-2 px-3 py-2 font-code text-[11px] text-text-main">
                 <p>
                   {#if budget!.limitMicros === 0}
-                    Spent {fmtMicros(budget!.spentMicros)} (no cost limit)
+                    {t('Spent {spent} (no cost limit)', { spent: fmtMicros(budget!.spentMicros) })}
                   {:else}
-                    Spent {fmtMicros(budget!.spentMicros)} of {fmtMicros(budget!.limitMicros)}
+                    {t('Spent {spent} of {limit}', {
+                      spent: fmtMicros(budget!.spentMicros),
+                      limit: fmtMicros(budget!.limitMicros),
+                    })}
                   {/if}
                 </p>
                 <p>
                   {#if budget!.limitTokens === 0}
-                    Spent {fmtTokens(budget!.spentTokens)} (no token limit)
+                    {t('Spent {spent} (no token limit)', { spent: fmtTokens(budget!.spentTokens) })}
                   {:else}
-                    Spent {fmtTokens(budget!.spentTokens)} of {fmtTokens(budget!.limitTokens)}
+                    {t('Spent {spent} of {limit}', {
+                      spent: fmtTokens(budget!.spentTokens),
+                      limit: fmtTokens(budget!.limitTokens),
+                    })}
                   {/if}
                 </p>
                 <p class="flex items-center gap-1.5">
                   <span
                     class="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium {statusClasses[budget!.status]}"
                   >
-                    {statusLabel[budget!.status]}
+                    {t(statusLabel[budget!.status])}
                   </span>
                 </p>
                 {#if budget!.note}
@@ -648,7 +665,7 @@
 
         <div>
           <label for="pol-context" class="block font-semibold text-text-muted mb-1">
-            Context limit per request
+            {t('Context limit per request')}
           </label>
           <input
             id="pol-context"
@@ -659,9 +676,7 @@
             class="w-full bg-surface border border-border rounded-lg px-3 py-2 font-code text-xs text-text-main focus:outline-none focus:border-brand-500"
           />
           <p class="text-text-subtle mt-1">
-            The largest context one request may use. Accepts a number or a scale (200K, 1M). A
-            conversation longer than this is trimmed to fit, and the answer's budget is capped to
-            what is left. Leave empty for the model's own window.
+            {t("The largest context one request may use. Accepts a number or a scale (200K, 1M). A conversation longer than this is trimmed to fit, and the answer's budget is capped to what is left. Leave empty for the model's own window.")}
           </p>
         </div>
       </section>
@@ -669,15 +684,15 @@
       <!-- Expiry -->
       <section class="space-y-3">
         <div>
-          <h3 class="font-headline text-xs font-bold text-text-main">Contract expiry</h3>
+          <h3 class="font-headline text-xs font-bold text-text-main">{t('Contract expiry')}</h3>
           <p class="text-text-subtle mt-0.5">
-            After this instant the key is rejected with 401. Leave empty for a key that never expires.
+            {t('After this instant the key is rejected with 401. Leave empty for a key that never expires.')}
           </p>
         </div>
         <input
           type="datetime-local"
           bind:value={expiresLocal}
-          aria-label="Expiry date and time"
+          aria-label={t('Expiry date and time')}
           class="w-full sm:w-64 bg-surface border border-border rounded-lg px-3 py-2 font-code text-xs text-text-main focus:outline-none focus:border-brand-500"
         />
       </section>
@@ -685,16 +700,15 @@
       <!-- Metadata -->
       <section class="space-y-3">
         <div>
-          <h3 class="font-headline text-xs font-bold text-text-main">Resale metadata</h3>
+          <h3 class="font-headline text-xs font-bold text-text-main">{t('Resale metadata')}</h3>
           <p class="text-text-subtle mt-0.5">
-            JSON object kept with the key. Accepted keys:
+            {t('JSON object kept with the key. Accepted keys:')}
             <span class="font-code">customerId</span>,
-            <span class="font-code">priceCents</span> (whole cents),
-            <span class="font-code">billingCycle</span> (one-off, monthly, quarterly, yearly),
+            <span class="font-code">priceCents</span> {t('(whole cents)')},
+            <span class="font-code">billingCycle</span> {t('(one-off, monthly, quarterly, yearly)')},
             <span class="font-code">contact</span>,
             <span class="font-code">notes</span>
-            — up to 2 KB. Any other key is refused, so a typo cannot silently drop
-            the key out of the resale report.
+            {t('— up to 2 KB. Any other key is refused, so a typo cannot silently drop the key out of the resale report.')}
           </p>
         </div>
         <textarea
@@ -710,9 +724,9 @@
       <section class="space-y-3">
         <div class="flex items-start justify-between gap-3">
           <div>
-            <h3 class="font-headline text-xs font-bold text-text-main">Model access</h3>
+            <h3 class="font-headline text-xs font-bold text-text-main">{t('Model access')}</h3>
             <p class="text-text-subtle mt-0.5">
-              The models this key may call. An empty list allows every model.
+              {t('The models this key may call. An empty list allows every model.')}
             </p>
           </div>
           <button
@@ -724,7 +738,7 @@
             {#if isLoadingModels}
               <Loader2 class="w-3.5 h-3.5 animate-spin inline" />
             {:else}
-              Reload
+              {t('Reload')}
             {/if}
           </button>
         </div>
@@ -738,7 +752,7 @@
           onclick={openModelPicker}
           class="w-full px-3 py-2 rounded-lg bg-surface-2 border border-border text-[11px] text-text-main hover:border-brand-500/40 transition cursor-pointer"
         >
-          Choose from the models this gateway publishes
+          {t('Choose from the models this gateway publishes')}
         </button>
 
         {#if models.length > 0}
@@ -751,7 +765,7 @@
                 <button
                   type="button"
                   onclick={() => (models = models.filter((_, idx) => idx !== i))}
-                  aria-label="Remove {pattern}"
+                  aria-label={t('Remove {pattern}', { pattern })}
                   class="hover:text-danger transition cursor-pointer"
                 >
                   <X class="w-3 h-3" />
@@ -770,7 +784,7 @@
           onclick={() => (showPatternInput = !showPatternInput)}
           class="self-start text-[11px] text-text-subtle hover:text-text-main transition cursor-pointer"
         >
-          {showPatternInput ? 'Hide pattern input' : 'Add a pattern instead'}
+          {showPatternInput ? t('Hide pattern input') : t('Add a pattern instead')}
         </button>
 
         {#if showPatternInput}
@@ -787,13 +801,13 @@
               onclick={addModel}
               class="px-3 py-2 rounded-lg bg-surface-3 border border-border text-[11px] text-text-main hover:border-brand-500/40 transition cursor-pointer"
             >
-              Add
+              {t('Add')}
             </button>
           </div>
           <p class="text-text-subtle text-[11px]">
-            Patterns may use <span class="font-code">*</span> per segment, e.g.
-            <span class="font-code">e2e/allowed-*</span>, and
-            <span class="font-code">!</span> or <span class="font-code">-</span> denies a model.
+            {t('Patterns may use')} <span class="font-code">*</span> {t('per segment, e.g.')}
+            <span class="font-code">e2e/allowed-*</span>, {t('and')}
+            <span class="font-code">!</span> {t('or')} <span class="font-code">-</span> {t('denies a model.')}
           </p>
         {/if}
       </section>
@@ -810,7 +824,7 @@
           onclick={onClose}
           class="px-4 py-2 rounded-lg text-text-muted hover:text-text-main cursor-pointer"
         >
-          Cancel
+          {t('Cancel')}
         </button>
         <button
           type="submit"
@@ -822,7 +836,7 @@
           {:else}
             <Save class="w-3.5 h-3.5" />
           {/if}
-          <span>Save Policy</span>
+          <span>{t('Save Policy')}</span>
         </button>
       </div>
     </form>

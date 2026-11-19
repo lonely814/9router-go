@@ -12,15 +12,18 @@ Done: the shell (`lib/nav.ts`, `Sidebar.svelte`, `TopBar.svelte`,
 `LoginView.svelte`, the page titles `App.svelte` passes to the top bar),
 `ProfileSettingsView.svelte`, `QuotaTrackerView.svelte` (+ the empty-state copy in
 `components/quota/types.ts`), `EndpointView.svelte`, `ProxyPoolsView.svelte`,
-`JailbreakView.svelte`, `TokenSaverView.svelte`, `connections/ProviderDetailView.svelte`
-and `connections/AddConnectionModal.svelte`.
+`JailbreakView.svelte`, `TokenSaverView.svelte`, `connections/ProviderDetailView.svelte`,
+`connections/AddConnectionModal.svelte`, `keys/ApiKeysTable.svelte`,
+`keys/ApiKeyPolicyModal.svelte`, `media/MediaProviderDetail.svelte`,
+`media/MediaKindView.svelte`, `CacheAnalyticsView.svelte`,
+`CompressionAnalyticsView.svelte`, `security/SecurityPanel.svelte`,
+`analytics/RequestDetailsTab.svelte` and `combos/CombosView.svelte`.
 
 Still English, roughly 1,800 candidate strings:
 
 | File | Strings |
 | --- | --- |
-| `components/keys/ApiKeysTable.svelte` | 111 (the API Keys card inside Endpoint) |
-| `components/media/MediaProviderDetail.svelte` | 77 |
+| `components/analytics/AnalyticsView.svelte` | 90 (the Usage shell: Overview, date range, section switcher) |
 | `components/CacheAnalyticsView.svelte` | 74 |
 | `components/keys/ApiKeyPolicyModal.svelte` | 64 |
 | `components/CompressionAnalyticsView.svelte` | 64 |
@@ -29,6 +32,10 @@ Still English, roughly 1,800 candidate strings:
 | `components/media/MediaKindView.svelte` | 40 |
 | `components/combos/CombosView.svelte` | 38 |
 | `components/CombosView` modals | 30-40 each |
+
+`web/scripts/i18n-tagcheck.py <ref> <file>...` must print OK for every file you
+touch. It fails when a translation added, dropped or reordered a tag — and that
+has happened: one batch folded styled spans into a `t()` call and lost them.
 
 `web/scripts/i18n-wrap.py <file> [--apply]` does the mechanical half: it wraps a
 whole text node or a `label`/`placeholder`/`title`/`aria-label` value in `t()`

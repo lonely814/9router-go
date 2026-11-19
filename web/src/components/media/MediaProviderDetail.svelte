@@ -3,6 +3,7 @@
   import { api, getStoredAPIKey, type APIKey, type ProviderConnection, type Settings } from '../../api/client'
   import { emailPrivacy, formatEmailLabel } from '../../lib/privacy'
   import { copyToClipboard } from '../../lib/clipboard'
+  import { t } from '../../lib/i18n.svelte'
   import { getModelKind, getModelsByProviderId, PROVIDER_ID_TO_ALIAS } from '../../lib/models'
   import { parseCustomModelsResponse, subscribeCustomModelsChanged } from '../../lib/customModels'
   import type { ProviderCatalogItem } from '../../lib/providers'
@@ -55,7 +56,7 @@
     webFetch: '/dashboard/media-providers/web'
   }
 
-  let kindTitle = $derived(KIND_LABELS[kind] || MEDIA_KIND_INFO[kind]?.title || kind)
+  let kindTitle = $derived(t(KIND_LABELS[kind] || MEDIA_KIND_INFO[kind]?.title || kind))
   let parentPath = $derived(KIND_PATHS[kind] || `/dashboard/media-providers/${kind}`)
 
   // Strategy & Round Robin
@@ -154,7 +155,7 @@
   }
 
   async function handleDeleteConn(id: string) {
-    if (!confirm('Are you sure you want to delete this connection?')) return
+    if (!confirm(t('Are you sure you want to delete this connection?'))) return
     try {
       await api.deleteConnection(id)
       onRefresh()
@@ -178,7 +179,7 @@
       await api.reorderConnection(conn.id, delta < 0 ? 'up' : 'down')
       onRefresh()
     } catch (e) {
-      alert(`Reorder failed: ${e instanceof Error ? e.message : String(e)}`)
+      alert(t('Reorder failed: {error}', { error: e instanceof Error ? e.message : String(e) }))
     } finally {
       reorderingConnId = null
     }
@@ -186,7 +187,7 @@
 
   async function handleSaveNewConnection() {
     if (!newConnKey.trim()) {
-      newConnError = 'API Key is required.'
+      newConnError = t('API Key is required.')
       return
     }
     isSavingConn = true
@@ -232,7 +233,7 @@
       editingConn = null
       onRefresh()
     } catch (err) {
-      alert(`Save failed: ${err instanceof Error ? err.message : String(err)}`)
+      alert(t('Save failed: {error}', { error: err instanceof Error ? err.message : String(err) }))
     }
   }
 
@@ -310,7 +311,7 @@
         latency: res.latencyMs ?? Math.round(performance.now() - start),
       }
     } catch (err) {
-      modelTestResults[modelId] = { ok: false, error: err instanceof Error ? err.message : 'Error', latency: Math.round(performance.now() - start) }
+      modelTestResults[modelId] = { ok: false, error: err instanceof Error ? err.message : t('Error'), latency: Math.round(performance.now() - start) }
     } finally {
       testingModelId = null
     }
@@ -665,7 +666,7 @@
               class="text-xs text-primary hover:underline inline-flex items-center gap-1"
             >
               <span class="material-symbols-outlined text-sm">open_in_new</span>
-              Get API Key
+              {t('Get API Key')}
             </a>
           {/if}
           <!-- Media tabs never mount the Providers view, so without a toggle
@@ -678,10 +679,10 @@
             class="ml-auto flex h-8 shrink-0 items-center gap-1 rounded-lg border px-2 text-xs transition-colors cursor-pointer {$emailPrivacy
               ? 'border-brand-500/40 bg-brand-500/10 text-brand-500 font-medium'
               : 'border-border-subtle bg-surface text-text-muted hover:text-text-main hover:bg-surface-2'}"
-            title={$emailPrivacy ? 'Show full email' : 'Mask / hide email'}
+            title={$emailPrivacy ? t('Show full email') : t('Mask / hide email')}
           >
             <span class="material-symbols-outlined text-[16px]">{$emailPrivacy ? 'visibility_off' : 'visibility'}</span>
-            <span class="hidden sm:inline">{$emailPrivacy ? 'Email Masked' : 'Mask Email'}</span>
+            <span class="hidden sm:inline">{$emailPrivacy ? t('Email Masked') : t('Mask Email')}</span>
           </button>
         </div>
         <div class="flex items-center gap-1.5 mt-1 flex-wrap">
@@ -707,7 +708,7 @@
           rel="noopener noreferrer"
           class="inline-flex justify-center rounded bg-blue-500 px-2 py-1 text-xs font-medium text-white transition-colors hover:bg-blue-600 sm:py-0.5"
         >
-          Get API Key →
+          {t('Get API Key →')}
         </a>
       {/if}
     </div>
@@ -719,9 +720,9 @@
   {:else}
     <div class="bg-surface border border-border-subtle rounded-[14px] shadow-[var(--shadow-soft)] p-6">
       <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
-        <h2 class="text-lg font-semibold text-text-main">Connections</h2>
+        <h2 class="text-lg font-semibold text-text-main">{t('Connections')}</h2>
         <div class="flex flex-wrap items-center gap-2">
-          <span class="text-xs text-text-muted font-medium">Round Robin</span>
+          <span class="text-xs text-text-muted font-medium">{t('Round Robin')}</span>
           <div class="flex items-center gap-3">
             <button
               type="button"
@@ -735,7 +736,7 @@
           </div>
           {#if isRoundRobin}
             <div class="flex flex-wrap items-center gap-1.5 ml-2">
-              <span class="text-xs text-text-muted">Sticky:</span>
+              <span class="text-xs text-text-muted">{t('Sticky:')}</span>
               <input
                 type="number"
                 min="1"
@@ -750,14 +751,14 @@
 
       {#if providerConns.length === 0}
         <div class="flex flex-col items-center justify-center py-8 border border-dashed border-border rounded-xl text-text-muted text-xs gap-2">
-          <span>No connections yet for {provider.name}.</span>
+          <span>{t('No connections yet for {provider}.', { provider: provider.name })}</span>
           <button
             type="button"
             onclick={() => (showAddConnModal = true)}
             class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary text-white font-medium hover:bg-primary/90 transition-colors cursor-pointer"
           >
             <span class="material-symbols-outlined text-sm">add</span>
-            Add Connection
+            {t('Add Connection')}
           </button>
         </div>
       {:else}
@@ -773,7 +774,7 @@
                     disabled={idx === 0 || !!reorderingConnId}
                     onclick={() => handleMovePriority(idx, -1)}
                     class="p-1 text-text-muted hover:text-text-main disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
-                    title="Move Up"
+                    title={t('Move Up')}
                   >
                     <span class="material-symbols-outlined text-sm">keyboard_arrow_up</span>
                   </button>
@@ -782,7 +783,7 @@
                     disabled={idx === providerConns.length - 1 || !!reorderingConnId}
                     onclick={() => handleMovePriority(idx, 1)}
                     class="p-1 text-text-muted hover:text-text-main disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
-                    title="Move Down"
+                    title={t('Move Down')}
                   >
                     <span class="material-symbols-outlined text-sm">keyboard_arrow_down</span>
                   </button>
@@ -793,10 +794,10 @@
                   type="button"
                   disabled={isLocked}
                   onclick={() => handleToggleConnActive(conn)}
-                  title={isLocked ? 'Disabled for all services on the Providers page' : isKindActive ? `Disable for ${kindTitle}` : `Enable for ${kindTitle}`}
+                  title={isLocked ? t('Disabled for all services on the Providers page') : isKindActive ? t('Disable for {kind}', { kind: kindTitle }) : t('Enable for {kind}', { kind: kindTitle })}
                   class="px-2 py-0.5 rounded text-[11px] font-semibold cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed {isLocked ? 'bg-surface-2 text-text-muted border border-border' : isKindActive ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' : 'bg-surface-2 text-text-muted border border-border'}"
                 >
-                  {isLocked ? 'locked' : isKindActive ? 'active' : 'disabled'}
+                  {isLocked ? t('locked') : isKindActive ? t('active') : t('disabled')}
                 </button>
                 <span class="text-xs text-text-muted font-mono">#{idx + 1}</span>
               </div>
@@ -807,7 +808,7 @@
                   class="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-lg border border-border hover:bg-surface-2 text-text-main transition-colors cursor-pointer"
                 >
                   <span class="material-symbols-outlined text-sm">edit</span>
-                  Edit
+                  {t('Edit')}
                 </button>
                 <button
                   type="button"
@@ -815,7 +816,7 @@
                   class="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-lg border border-red-500/20 text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer"
                 >
                   <span class="material-symbols-outlined text-sm">delete</span>
-                  Delete
+                  {t('Delete')}
                 </button>
               </div>
             </div>
@@ -827,7 +828,7 @@
               class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors cursor-pointer"
             >
               <span class="material-symbols-outlined text-sm">add</span>
-              Add
+              {t('Add')}
             </button>
           </div>
         </div>
@@ -839,10 +840,10 @@
   {#if kind !== 'tts' && kind !== 'webSearch' && kind !== 'webFetch'}
     <div class="bg-surface border border-border-subtle rounded-[14px] shadow-[var(--shadow-soft)] p-6">
       <div class="flex items-center justify-between mb-4">
-        <h2 class="text-lg font-semibold text-text-main">Models — {kind.toUpperCase()}</h2>
+        <h2 class="text-lg font-semibold text-text-main">{t('Models')} — {kind.toUpperCase()}</h2>
       </div>
       {#if mediaModels.length === 0}
-        <p class="text-xs text-text-muted italic">No models registered for this kind.</p>
+        <p class="text-xs text-text-muted italic">{t('No models registered for this kind.')}</p>
       {:else}
         <div class="flex flex-wrap gap-3">
           {#each mediaModels as m (m.id)}
@@ -867,7 +868,7 @@
                   >
                     {verdict.ok
                       ? `${verdict.latency ?? 0} ms${verdict.note ? ` · ${verdict.note}` : ''}`
-                      : verdict.error || 'Test failed'}
+                      : verdict.error || t('Test failed')}
                   </span>
                 {/if}
               </div>
@@ -877,7 +878,7 @@
                   onclick={() => handleTestModel(m.id)}
                   disabled={testingModelId === m.id}
                   class="p-1 hover:bg-surface-2 rounded text-text-muted hover:text-primary transition-colors cursor-pointer disabled:cursor-not-allowed"
-                  title={verdict?.error || (verdict?.ok ? `Test passed in ${verdict.latency ?? 0} ms` : 'Test Model')}
+                  title={verdict?.error || (verdict?.ok ? t('Test passed in {ms} ms', { ms: verdict.latency ?? 0 }) : t('Test Model'))}
                 >
                   <span class="material-symbols-outlined text-sm {testingModelId === m.id ? 'animate-spin' : ''}">science</span>
                 </button>
@@ -885,7 +886,7 @@
                   type="button"
                   onclick={() => handleCopyModel(m.id)}
                   class="p-1 hover:bg-surface-2 rounded text-text-muted hover:text-primary transition-colors cursor-pointer"
-                  title="Copy Model ID"
+                  title={t('Copy Model ID')}
                 >
                   <span class="material-symbols-outlined text-sm">{copiedModelId === m.id ? 'check' : 'content_copy'}</span>
                 </button>
@@ -901,7 +902,7 @@
   {#if configRows.length > 0 || provider.notice?.text}
     <div class="bg-surface border border-border-subtle rounded-[14px] shadow-[var(--shadow-soft)] p-6">
       <div class="flex items-center justify-between mb-3">
-        <h2 class="text-lg font-semibold text-text-main">{kindTitle} Config</h2>
+        <h2 class="text-lg font-semibold text-text-main">{t('{kind} Config', { kind: kindTitle })}</h2>
         {#if provider.notice?.apiKeyUrl || provider.website}
           <a
             href={provider.notice?.apiKeyUrl || provider.website}
@@ -910,14 +911,14 @@
             class="text-xs text-primary hover:underline inline-flex items-center gap-1"
           >
             <span class="material-symbols-outlined text-sm">open_in_new</span>
-            Get API Key
+            {t('Get API Key')}
           </a>
         {/if}
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
         {#each configRows as r (r.key)}
           <div class="flex items-center gap-3 min-w-0">
-            <span class="text-xs text-text-muted w-28 shrink-0">{r.label}</span>
+            <span class="text-xs text-text-muted w-28 shrink-0">{t(r.label)}</span>
             {#if r.isLink}
               <a
                 href={r.raw}
@@ -925,18 +926,18 @@
                 rel="noopener noreferrer"
                 class="text-sm text-primary hover:underline truncate {r.mono ? 'font-mono' : ''}"
               >
-                {r.value}
+                {t(r.value)}
               </a>
             {:else}
               <span class="text-sm text-text-main truncate {r.mono ? 'font-mono' : ''}">
-                {r.value}
+                {t(r.value)}
               </span>
             {/if}
           </div>
         {/each}
         {#if provider.notice?.text}
           <div class="flex items-start gap-3 min-w-0 sm:col-span-2">
-            <span class="text-xs text-text-muted w-28 shrink-0 mt-0.5">Notice</span>
+            <span class="text-xs text-text-muted w-28 shrink-0 mt-0.5">{t('Notice')}</span>
             <span class="text-sm text-text-main leading-relaxed">{provider.notice.text}</span>
           </div>
         {/if}
@@ -951,12 +952,12 @@
     <SttExampleCard providerId={provider.id} {apiKeys} {connections} />
   {:else}
     <div class="bg-surface border border-border-subtle rounded-[14px] shadow-[var(--shadow-soft)] p-6">
-    <h2 class="text-lg font-semibold text-text-main mb-4">Example</h2>
+    <h2 class="text-lg font-semibold text-text-main mb-4">{t('Example')}</h2>
     <div class="flex flex-col gap-2.5">
       <!-- Model selector (if media models exist) -->
       {#if mediaModels.length > 0}
         <div class="flex min-w-0 flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3">
-          <span class="w-full text-xs font-medium text-text-muted sm:w-20 sm:shrink-0">Model</span>
+          <span class="w-full text-xs font-medium text-text-muted sm:w-20 sm:shrink-0">{t('Model')}</span>
           <div class="w-full min-w-0 flex-1">
             <select
               bind:value={selectedModelId}
@@ -972,7 +973,7 @@
 
       <!-- Endpoint -->
       <div class="flex min-w-0 flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3">
-        <span class="w-full text-xs font-medium text-text-muted sm:w-20 sm:shrink-0">Endpoint</span>
+        <span class="w-full text-xs font-medium text-text-muted sm:w-20 sm:shrink-0">{t('Endpoint')}</span>
         <div class="w-full min-w-0 flex-1">
           <span class="px-3 py-1.5 text-sm font-mono text-text-main bg-sidebar rounded-lg truncate block">
             {exampleEndpoint}
@@ -982,13 +983,13 @@
 
       <!-- API Key -->
       <div class="flex min-w-0 flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3">
-        <span class="w-full text-xs font-medium text-text-muted sm:w-20 sm:shrink-0">API Key</span>
+        <span class="w-full text-xs font-medium text-text-muted sm:w-20 sm:shrink-0">{t('API Key')}</span>
         <div class="w-full min-w-0 flex-1">
           <span class="px-3 py-1.5 text-sm font-mono text-text-main bg-sidebar rounded-lg truncate block">
             {#if activeApiKey}
               {activeApiKey.slice(0, 8) + '•'.repeat(Math.min(20, Math.max(0, activeApiKey.length - 8)))}
             {:else}
-              <span class="text-text-muted italic">No key configured</span>
+              <span class="text-text-muted italic">{t('No key configured')}</span>
             {/if}
           </span>
         </div>
@@ -996,13 +997,13 @@
 
       <!-- Connection selector -->
       <div class="flex min-w-0 flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3">
-        <span class="w-full text-xs font-medium text-text-muted sm:w-20 sm:shrink-0">Connection</span>
+        <span class="w-full text-xs font-medium text-text-muted sm:w-20 sm:shrink-0">{t('Connection')}</span>
         <div class="w-full min-w-0 flex-1">
           <select
             bind:value={selectedConnId}
             class="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background focus:outline-none focus:border-primary text-text-main"
           >
-            <option value="">Auto (by priority)</option>
+            <option value="">{t('Auto (by priority)')}</option>
             {#each providerConns as conn}
               <option value={conn.id}>{formatEmailLabel(conn.displayName || conn.name || conn.email || conn.id.slice(0, 8), $emailPrivacy)}</option>
             {/each}
@@ -1013,7 +1014,7 @@
       <!-- Kind-specific inputs -->
       {#if kind === 'video' || kind === 'image'}
         <div class="flex min-w-0 flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3">
-          <span class="w-full text-xs font-medium text-text-muted sm:w-20 sm:shrink-0">Prompt</span>
+          <span class="w-full text-xs font-medium text-text-muted sm:w-20 sm:shrink-0">{t('Prompt')}</span>
           <div class="w-full min-w-0 flex-1 relative">
             <input
               bind:value={exampleInput}
@@ -1032,7 +1033,7 @@
         </div>
       {:else if kind === 'tts'}
         <div class="flex min-w-0 flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3">
-          <span class="w-full text-xs font-medium text-text-muted sm:w-20 sm:shrink-0">Voice</span>
+          <span class="w-full text-xs font-medium text-text-muted sm:w-20 sm:shrink-0">{t('Voice')}</span>
           <div class="w-full min-w-0 flex-1">
             <select
               bind:value={selectedVoice}
@@ -1045,7 +1046,7 @@
           </div>
         </div>
         <div class="flex min-w-0 flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3">
-          <span class="w-full text-xs font-medium text-text-muted sm:w-20 sm:shrink-0">Input</span>
+          <span class="w-full text-xs font-medium text-text-muted sm:w-20 sm:shrink-0">{t('Input')}</span>
           <div class="w-full min-w-0 flex-1 relative">
             <input
               bind:value={exampleInput}
@@ -1063,14 +1064,14 @@
           </div>
         </div>
         <div class="flex min-w-0 flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3">
-          <span class="w-full text-xs font-medium text-text-muted sm:w-20 sm:shrink-0">Format</span>
+          <span class="w-full text-xs font-medium text-text-muted sm:w-20 sm:shrink-0">{t('Format')}</span>
           <div class="w-full min-w-0 flex-1">
             <select
               bind:value={ttsResponseFormat}
               class="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background focus:outline-none focus:border-primary text-text-main"
             >
-              <option value="json">json (base64 preview)</option>
-              <option value="mp3">mp3 (direct audio)</option>
+              <option value="json">{t('json (base64 preview)')}</option>
+              <option value="mp3">{t('mp3 (direct audio)')}</option>
               <option value="opus">opus</option>
               <option value="aac">aac</option>
               <option value="flac">flac</option>
@@ -1081,7 +1082,7 @@
         </div>
       {:else if kind === 'embedding'}
         <div class="flex min-w-0 flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3">
-          <span class="w-full text-xs font-medium text-text-muted sm:w-20 sm:shrink-0">Input</span>
+          <span class="w-full text-xs font-medium text-text-muted sm:w-20 sm:shrink-0">{t('Input')}</span>
           <div class="w-full min-w-0 flex-1 relative">
             <input
               bind:value={exampleInput}
@@ -1100,7 +1101,7 @@
         </div>
       {:else if kind === 'stt'}
         <div class="flex min-w-0 flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3">
-          <span class="w-full text-xs font-medium text-text-muted sm:w-20 sm:shrink-0">Audio File</span>
+          <span class="w-full text-xs font-medium text-text-muted sm:w-20 sm:shrink-0">{t('Audio File')}</span>
           <div class="w-full min-w-0 flex-1">
             <input
               type="text"
@@ -1110,7 +1111,7 @@
           </div>
         </div>
         <div class="flex min-w-0 flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3">
-          <span class="w-full text-xs font-medium text-text-muted sm:w-20 sm:shrink-0">Response Format</span>
+          <span class="w-full text-xs font-medium text-text-muted sm:w-20 sm:shrink-0">{t('Response Format')}</span>
           <div class="w-full min-w-0 flex-1">
             <select
               bind:value={sttResponseFormat}
@@ -1126,28 +1127,28 @@
         </div>
       {:else if kind === 'systemone'}
         <div class="flex min-w-0 flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3">
-          <span class="w-full text-xs font-medium text-text-muted sm:w-20 sm:shrink-0">State</span>
+          <span class="w-full text-xs font-medium text-text-muted sm:w-20 sm:shrink-0">{t('State')}</span>
           <div class="w-full min-w-0 flex-1">
             <input
               bind:value={exampleInput}
-              placeholder="Situation, support ticket, or text to evaluate"
+              placeholder={t('Situation, support ticket, or text to evaluate')}
               class="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background focus:outline-none focus:border-primary text-text-main font-mono"
             />
           </div>
         </div>
         <div class="flex min-w-0 flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3">
-          <span class="w-full text-xs font-medium text-text-muted sm:w-20 sm:shrink-0">Question</span>
+          <span class="w-full text-xs font-medium text-text-muted sm:w-20 sm:shrink-0">{t('Question')}</span>
           <div class="w-full min-w-0 flex-1">
             <input
               bind:value={exampleQuestion}
-              placeholder="Enter evaluation question or criteria"
+              placeholder={t('Enter evaluation question or criteria')}
               class="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background focus:outline-none focus:border-primary text-text-main font-mono"
             />
           </div>
         </div>
       {:else if kind === 'webSearch'}
         <div class="flex min-w-0 flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3">
-          <span class="w-full text-xs font-medium text-text-muted sm:w-20 sm:shrink-0">Query</span>
+          <span class="w-full text-xs font-medium text-text-muted sm:w-20 sm:shrink-0">{t('Query')}</span>
           <div class="w-full min-w-0 flex-1 relative">
             <input
               bind:value={exampleInput}
@@ -1156,7 +1157,7 @@
           </div>
         </div>
         <div class="flex min-w-0 flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3">
-          <span class="w-full text-xs font-medium text-text-muted sm:w-20 sm:shrink-0">Type</span>
+          <span class="w-full text-xs font-medium text-text-muted sm:w-20 sm:shrink-0">{t('Type')}</span>
           <div class="w-full min-w-0 flex-1">
             <select
               bind:value={searchType}
@@ -1168,7 +1169,7 @@
           </div>
         </div>
         <div class="flex min-w-0 flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3">
-          <span class="w-full text-xs font-medium text-text-muted sm:w-20 sm:shrink-0">Max results</span>
+          <span class="w-full text-xs font-medium text-text-muted sm:w-20 sm:shrink-0">{t('Max results')}</span>
           <div class="w-full min-w-0 flex-1">
             <input
               type="number"
@@ -1180,7 +1181,7 @@
           </div>
         </div>
         <div class="flex min-w-0 flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3">
-          <span class="w-full text-xs font-medium text-text-muted sm:w-20 sm:shrink-0">Country</span>
+          <span class="w-full text-xs font-medium text-text-muted sm:w-20 sm:shrink-0">{t('Country')}</span>
           <div class="w-full min-w-0 flex-1">
             <input
               type="text"
@@ -1190,7 +1191,7 @@
           </div>
         </div>
         <div class="flex min-w-0 flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3">
-          <span class="w-full text-xs font-medium text-text-muted sm:w-20 sm:shrink-0">Language</span>
+          <span class="w-full text-xs font-medium text-text-muted sm:w-20 sm:shrink-0">{t('Language')}</span>
           <div class="w-full min-w-0 flex-1">
             <input
               type="text"
@@ -1210,7 +1211,7 @@
           </div>
         </div>
         <div class="flex min-w-0 flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3">
-          <span class="w-full text-xs font-medium text-text-muted sm:w-20 sm:shrink-0">Format</span>
+          <span class="w-full text-xs font-medium text-text-muted sm:w-20 sm:shrink-0">{t('Format')}</span>
           <div class="w-full min-w-0 flex-1">
             <select
               bind:value={fetchFormat}
@@ -1223,7 +1224,7 @@
           </div>
         </div>
         <div class="flex min-w-0 flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3">
-          <span class="w-full text-xs font-medium text-text-muted sm:w-20 sm:shrink-0">Max chars</span>
+          <span class="w-full text-xs font-medium text-text-muted sm:w-20 sm:shrink-0">{t('Max chars')}</span>
           <div class="w-full min-w-0 flex-1">
             <input
               type="number"
@@ -1238,7 +1239,7 @@
       <!-- REQUEST Section -->
       <div class="mt-2">
         <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-1.5">
-          <span class="text-xs font-semibold text-text-muted uppercase tracking-wider">Request</span>
+          <span class="text-xs font-semibold text-text-muted uppercase tracking-wider">{t('Request')}</span>
           <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
             <button
               type="button"
@@ -1246,7 +1247,7 @@
               class="inline-flex items-center gap-1 text-xs text-text-muted hover:text-primary transition-colors cursor-pointer mr-2"
             >
               <span class="material-symbols-outlined text-[14px]">content_copy</span>
-              {copiedCurl ? 'Copied' : 'Copy'}
+              {copiedCurl ? t('Copied') : t('Copy')}
             </button>
             <button
               type="button"
@@ -1255,7 +1256,7 @@
               class="flex w-full sm:w-auto items-center justify-center gap-1.5 px-3 py-1 rounded-lg bg-primary text-white text-xs font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               <span class="material-symbols-outlined text-[14px]">play_arrow</span>
-              {isTestingExample ? 'Running...' : 'Run'}
+              {isTestingExample ? t('Running...') : t('Run')}
             </button>
           </div>
         </div>
@@ -1266,7 +1267,7 @@
       <div>
         <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-1.5">
           <span class="text-xs font-semibold text-text-muted uppercase tracking-wider">
-            Response {exampleLatency ? `(${exampleLatency}ms)` : ''}
+            {t('Response')} {exampleLatency ? `(${exampleLatency}ms)` : ''}
           </span>
         </div>
         <pre class="bg-sidebar rounded-lg px-3 py-2.5 text-xs font-mono text-text-main overflow-x-auto whitespace-pre-wrap break-all opacity-70">{exampleResponse || defaultResponse}</pre>
@@ -1286,7 +1287,7 @@
     ></div>
     <div class="relative w-full max-w-md bg-surface border border-border-subtle rounded-[14px] shadow-[var(--shadow-elev)] p-6 z-10 flex flex-col gap-4">
       <div class="flex items-center justify-between">
-        <h3 class="text-base font-semibold text-text-main">Add {provider.name} Connection</h3>
+        <h3 class="text-base font-semibold text-text-main">{t('Add {provider} Connection', { provider: provider.name })}</h3>
         <button
           type="button"
           onclick={() => (showAddConnModal = false)}
@@ -1301,20 +1302,20 @@
         </div>
       {/if}
       <div class="flex flex-col gap-1.5">
-        <label class="text-xs font-medium text-text-muted">API Key / Token</label>
+        <label class="text-xs font-medium text-text-muted">{t('API Key / Token')}</label>
         <input
           type="password"
           bind:value={newConnKey}
-          placeholder="Enter API key"
+          placeholder={t('Enter API key')}
           class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background text-text-main focus:outline-none focus:border-brand-500 font-mono"
         />
       </div>
       <div class="flex flex-col gap-1.5">
-        <label class="text-xs font-medium text-text-muted">Display Name (optional)</label>
+        <label class="text-xs font-medium text-text-muted">{t('Display Name (optional)')}</label>
         <input
           type="text"
           bind:value={newConnName}
-          placeholder="e.g. Primary Account"
+          placeholder={t('e.g. Primary Account')}
           class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background text-text-main focus:outline-none focus:border-brand-500"
         />
       </div>
@@ -1324,7 +1325,7 @@
           onclick={() => (showAddConnModal = false)}
           class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-surface-2 hover:bg-surface-3 text-text-main border border-border cursor-pointer"
         >
-          Cancel
+          {t('Cancel')}
         </button>
         <button
           type="button"
@@ -1332,7 +1333,7 @@
           disabled={isSavingConn}
           class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors cursor-pointer disabled:opacity-50"
         >
-          {isSavingConn ? 'Saving...' : 'Add Connection'}
+          {isSavingConn ? t('Saving...') : t('Add Connection')}
         </button>
       </div>
     </div>
@@ -1349,7 +1350,7 @@
     ></div>
     <div class="relative w-full max-w-md bg-surface border border-border-subtle rounded-[14px] shadow-[var(--shadow-elev)] p-6 z-10 flex flex-col gap-4">
       <div class="flex items-center justify-between">
-        <h3 class="text-base font-semibold text-text-main">Edit Connection</h3>
+        <h3 class="text-base font-semibold text-text-main">{t('Edit Connection')}</h3>
         <button
           type="button"
           onclick={() => (editingConn = null)}
@@ -1359,7 +1360,7 @@
         </button>
       </div>
       <div class="flex flex-col gap-1.5">
-        <label class="text-xs font-medium text-text-muted">Display Name</label>
+        <label class="text-xs font-medium text-text-muted">{t('Display Name')}</label>
         <input
           type="text"
           bind:value={editConnName}
@@ -1367,7 +1368,7 @@
         />
       </div>
       <div class="flex items-center justify-between py-1">
-        <span class="text-xs font-medium text-text-muted">Active</span>
+        <span class="text-xs font-medium text-text-muted">{t('Active')}</span>
         <input type="checkbox" bind:checked={isEditingActive} class="size-4 rounded text-brand-500 focus:ring-brand-500" />
       </div>
       <div class="flex items-center justify-end gap-2 pt-2 border-t border-border">
@@ -1376,14 +1377,14 @@
           onclick={() => (editingConn = null)}
           class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-surface-2 hover:bg-surface-3 text-text-main border border-border cursor-pointer"
         >
-          Cancel
+          {t('Cancel')}
         </button>
         <button
           type="button"
           onclick={handleSaveEditedConn}
           class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors cursor-pointer"
         >
-          Save
+          {t('Save')}
         </button>
       </div>
     </div>

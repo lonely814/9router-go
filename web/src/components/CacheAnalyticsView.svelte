@@ -15,6 +15,7 @@
   import type { ViewOption } from './analytics/types'
   import { costIn } from '../lib/currency.svelte'
   import { isPanelVisible } from '../lib/usagePanel.svelte'
+  import { t } from '../lib/i18n.svelte'
 
   type CacheView = 'prompt' | 'semantic'
 
@@ -29,10 +30,12 @@
 
   let { headerLeft }: Props = $props()
 
-  const VIEW_OPTIONS: ViewOption[] = [
-    { value: 'prompt', label: 'Prompt Cache', icon: 'bolt' },
-    { value: 'semantic', label: 'Semantic Cache', icon: 'psychology' },
-  ]
+  // $derived, not a plain const: t() reads the active locale, and that read is
+  // what re-renders these labels when the operator switches language.
+  let viewOptions: ViewOption[] = $derived([
+    { value: 'prompt', label: t('Prompt Cache'), icon: 'bolt' },
+    { value: 'semantic', label: t('Semantic Cache'), icon: 'psychology' },
+  ])
 
   let activeView = $state<CacheView>('prompt')
   let loading = $state(true)
@@ -62,7 +65,7 @@
       stats = await api.getCacheStats(period)
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err)
-      notifications.error(msg, 'Failed to load cache stats')
+      notifications.error(msg, t('Failed to load cache stats'))
     } finally {
       loading = false
     }
@@ -84,7 +87,7 @@
       totalEntries = res.pagination?.total || 0
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err)
-      notifications.error(msg, 'Failed to load cache entries')
+      notifications.error(msg, t('Failed to load cache entries'))
     } finally {
       entriesLoading = false
     }
@@ -98,27 +101,27 @@
   }
 
   async function handleClearAll() {
-    if (!confirm('Clear all semantic cache entries?')) return
+    if (!confirm(t('Clear all semantic cache entries?'))) return
     try {
       await api.deleteCache()
-      notifications.success('Semantic cache cleared successfully')
+      notifications.success(t('Semantic cache cleared successfully'))
       await loadStats()
       if (entriesWanted()) await loadEntries()
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err)
-      notifications.error(msg, 'Failed to clear cache')
+      notifications.error(msg, t('Failed to clear cache'))
     }
   }
 
   async function handleDeleteEntry(id: string) {
     try {
       await api.deleteCacheEntry(id)
-      notifications.success('Cache entry deleted')
+      notifications.success(t('Cache entry deleted'))
       await loadStats()
       if (entriesWanted()) await loadEntries()
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err)
-      notifications.error(msg, 'Failed to delete entry')
+      notifications.error(msg, t('Failed to delete entry'))
     }
   }
 
@@ -127,13 +130,13 @@
     if (!m) return
     try {
       const res = await api.deleteCache({ model: m })
-      notifications.success(`Invalidated ${res.count ?? 0} entries for model ${m}`)
+      notifications.success(t('Invalidated {count} entries for model {model}', { count: res.count ?? 0, model: m }))
       invalidateModelInput = ''
       await loadStats()
       if (entriesWanted()) await loadEntries()
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err)
-      notifications.error(msg, 'Failed to invalidate model')
+      notifications.error(msg, t('Failed to invalidate model'))
     }
   }
 
@@ -176,7 +179,7 @@
     a.download = `cache-analytics-${period}.json`
     a.click()
     URL.revokeObjectURL(url)
-    notifications.success('Exported JSON successfully')
+    notifications.success(t('Exported JSON successfully'))
   }
 
   function exportCSV() {
@@ -195,7 +198,7 @@
     a.download = `cache-analytics-${period}.csv`
     a.click()
     URL.revokeObjectURL(url)
-    notifications.success('Exported CSV successfully')
+    notifications.success(t('Exported CSV successfully'))
   }
 
   $effect(() => {
@@ -284,8 +287,8 @@
 
         <ViewSelect
           value={activeView}
-          options={VIEW_OPTIONS}
-          ariaLabel="Cache view"
+          options={viewOptions}
+          ariaLabel={t('Cache view')}
           onChange={(next) => selectView(next as CacheView)}
         />
 
@@ -302,9 +305,9 @@
       </div>
 
       <div class="flex items-center gap-2">
-        <Menu label="Cache analytics actions" minWidth="14rem">
+        <Menu label={t('Cache analytics actions')} minWidth="14rem">
           <MenuItem
-            label="Auto-refresh"
+            label={t('Auto-refresh')}
             icon="sync"
             checkbox
             note="15s"
@@ -312,20 +315,20 @@
             onSelect={() => (autoRefresh = !autoRefresh)}
           />
           <MenuItem
-            label="Refresh now"
+            label={t('Refresh now')}
             icon="refresh"
             disabled={loading}
             onSelect={refreshAll}
           />
           <div class="my-1 border-t border-border-subtle" role="separator"></div>
-          <MenuItem label="Export CSV" icon="download" onSelect={exportCSV} />
-          <MenuItem label="Export JSON" icon="data_object" onSelect={exportJSON} />
+          <MenuItem label={t('Export CSV')} icon="download" onSelect={exportCSV} />
+          <MenuItem label={t('Export JSON')} icon="data_object" onSelect={exportJSON} />
         </Menu>
       </div>
     </div>
 
     <p class="text-sm text-text-muted">
-      Prompt caching and semantic deduplication tracking across all AI providers.
+      {t('Prompt caching and semantic deduplication tracking across all AI providers.')}
     </p>
   </div>
 
@@ -335,13 +338,13 @@
       <!-- Cache Rate -->
       <div class="rounded-2xl border border-border bg-surface p-4 shadow-sm flex flex-col justify-between">
         <div class="flex items-center justify-between text-text-muted">
-          <span class="text-xs font-medium uppercase tracking-wider">Cache Rate</span>
+          <span class="text-xs font-medium uppercase tracking-wider">{t('Cache Rate')}</span>
           <span class="material-symbols-outlined text-[20px] text-emerald-500">speed</span>
         </div>
         <div class="mt-3">
           <div class="text-2xl font-bold text-text-main">{cacheRate.toFixed(1)}%</div>
           <p class="text-xs text-text-subtle mt-1 truncate">
-            {pc?.requestsWithCacheControl ?? 0} / {pc?.totalRequests ?? 0} requests
+            {t('{cached} / {total} requests', { cached: pc?.requestsWithCacheControl ?? 0, total: pc?.totalRequests ?? 0 })}
           </p>
         </div>
       </div>
@@ -349,54 +352,54 @@
       <!-- Reuse Ratio -->
       <div class="rounded-2xl border border-border bg-surface p-4 shadow-sm flex flex-col justify-between">
         <div class="flex items-center justify-between text-text-muted">
-          <span class="text-xs font-medium uppercase tracking-wider">Reuse Ratio</span>
+          <span class="text-xs font-medium uppercase tracking-wider">{t('Reuse Ratio')}</span>
           <span class="material-symbols-outlined text-[20px] text-blue-400">savings</span>
         </div>
         <div class="mt-3">
           <div class="text-2xl font-bold text-text-main">{reuseRatio.toFixed(1)}%</div>
-          <p class="text-xs text-text-subtle mt-1 truncate">Cached vs input tokens</p>
+          <p class="text-xs text-text-subtle mt-1 truncate">{t('Cached vs input tokens')}</p>
         </div>
       </div>
 
       <!-- Cached Tokens Read -->
       <div class="rounded-2xl border border-border bg-surface p-4 shadow-sm flex flex-col justify-between">
         <div class="flex items-center justify-between text-text-muted">
-          <span class="text-xs font-medium uppercase tracking-wider">Cached Tokens</span>
+          <span class="text-xs font-medium uppercase tracking-wider">{t('Cached Tokens')}</span>
           <span class="material-symbols-outlined text-[20px] text-cyan-400">token</span>
         </div>
         <div class="mt-3">
           <div class="text-2xl font-bold text-text-main">
             {(pc?.totalCachedTokens ?? 0).toLocaleString()}
           </div>
-          <p class="text-xs text-text-subtle mt-1 truncate">Read from prompt cache</p>
+          <p class="text-xs text-text-subtle mt-1 truncate">{t('Read from prompt cache')}</p>
         </div>
       </div>
 
       <!-- Cache Creation Tokens -->
       <div class="rounded-2xl border border-border bg-surface p-4 shadow-sm flex flex-col justify-between">
         <div class="flex items-center justify-between text-text-muted">
-          <span class="text-xs font-medium uppercase tracking-wider">Creation Tokens</span>
+          <span class="text-xs font-medium uppercase tracking-wider">{t('Creation Tokens')}</span>
           <span class="material-symbols-outlined text-[20px] text-purple-400">upload</span>
         </div>
         <div class="mt-3">
           <div class="text-2xl font-bold text-text-main">
             {(pc?.totalCacheCreationTokens ?? 0).toLocaleString()}
           </div>
-          <p class="text-xs text-text-subtle mt-1 truncate">Written to prompt cache</p>
+          <p class="text-xs text-text-subtle mt-1 truncate">{t('Written to prompt cache')}</p>
         </div>
       </div>
 
       <!-- Est Cost Saved -->
       <div class="rounded-2xl border border-border bg-surface p-4 shadow-sm flex flex-col justify-between col-span-2 sm:col-span-1">
         <div class="flex items-center justify-between text-text-muted">
-          <span class="text-xs font-medium uppercase tracking-wider">Cost Saved</span>
+          <span class="text-xs font-medium uppercase tracking-wider">{t('Cost Saved')}</span>
           <span class="material-symbols-outlined text-[20px] text-emerald-400">attach_money</span>
         </div>
         <div class="mt-3">
           <div class="text-2xl font-bold text-emerald-500">
             {costIn(pc?.estimatedCostSaved ?? 0)}
           </div>
-          <p class="text-xs text-text-subtle mt-1 truncate">Estimated savings</p>
+          <p class="text-xs text-text-subtle mt-1 truncate">{t('Estimated savings')}</p>
         </div>
       </div>
     </div>
@@ -410,9 +413,9 @@
         <div>
           <h3 class="text-sm font-semibold text-text-main flex items-center gap-1.5">
             <span class="material-symbols-outlined text-[18px] text-brand-500">monitoring</span>
-            Hourly Cache Trend
+            {t('Hourly Cache Trend')}
           </h3>
-          <p class="text-xs text-text-subtle">Requests and cached tokens over time.</p>
+          <p class="text-xs text-text-subtle">{t('Requests and cached tokens over time.')}</p>
         </div>
 
         {#if hoveredTrendPoint}
@@ -422,27 +425,26 @@
               {hoveredTrendPoint.timestamp.replace('T', ' ').replace(':00:00Z', ':00')}
             </span>
             <span class="text-border">|</span>
-            <span class="text-text-muted">Total: <strong class="text-text-main font-mono">{hoveredTrendPoint.requests}</strong></span>
+            <span class="text-text-muted">{t('Total:')} <strong class="text-text-main font-mono">{hoveredTrendPoint.requests}</strong></span>
             <span class="text-border">|</span>
-            <span class="text-emerald-500">Cached: <strong class="font-mono">{hoveredTrendPoint.cachedRequests}</strong> ({hoveredTrendPoint.requests > 0 ? ((hoveredTrendPoint.cachedRequests / hoveredTrendPoint.requests) * 100).toFixed(0) : 0}%)</span>
+            <span class="text-emerald-500">{t('Cached:')} <strong class="font-mono">{hoveredTrendPoint.cachedRequests}</strong> ({hoveredTrendPoint.requests > 0 ? ((hoveredTrendPoint.cachedRequests / hoveredTrendPoint.requests) * 100).toFixed(0) : 0}%)</span>
             <span class="text-border">|</span>
-            <span class="text-cyan-400">Tokens: <strong class="font-mono">{hoveredTrendPoint.cachedTokens.toLocaleString()}</strong></span>
+            <span class="text-cyan-400">{t('Tokens:')} <strong class="font-mono">{hoveredTrendPoint.cachedTokens.toLocaleString()}</strong></span>
           </div>
         {:else}
           <div class="text-[11px] text-text-subtle hidden sm:block">
-            Hover over any column to inspect hourly breakdown
+            {t('Hover over any column to inspect hourly breakdown')}
           </div>
         {/if}
       </div>
 
       {#if period === 'all'}
         <div class="py-12 text-center text-xs text-text-subtle">
-          The hourly trend needs a bounded window — it is one bucket per hour
-          since the ledger began over "All time". Pick a shorter period to see it.
+          {t('The hourly trend needs a bounded window — it is one bucket per hour since the ledger began over "All time". Pick a shorter period to see it.')}
         </div>
       {:else if !stats?.trend || stats.trend.length === 0}
         <div class="py-12 text-center text-xs text-text-subtle">
-          No cache activity recorded in the {periodLabel(period).toLowerCase()}.
+          {t('No cache activity recorded in the {period}.', { period: periodLabel(period).toLowerCase() })}
         </div>
       {:else}
         <div class="h-48 w-full flex items-end gap-1.5 pt-4 pb-1 overflow-x-auto">
@@ -472,13 +474,13 @@
         <div class="flex flex-wrap items-center justify-between text-[11px] text-text-subtle mt-2 pt-2 border-t border-border-subtle gap-2">
           <div class="flex items-center gap-4">
             <span class="inline-flex items-center gap-1.5">
-              <span class="w-2.5 h-2.5 rounded-sm bg-primary/30"></span> Total Requests
+              <span class="w-2.5 h-2.5 rounded-sm bg-primary/30"></span> {t('Total Requests')}
             </span>
             <span class="inline-flex items-center gap-1.5">
-              <span class="w-2.5 h-2.5 rounded-sm bg-emerald-500"></span> Cached Requests
+              <span class="w-2.5 h-2.5 rounded-sm bg-emerald-500"></span> {t('Cached Requests')}
             </span>
           </div>
-          <span>{periodLabel(period)}</span>
+          <span>{t(periodLabel(period))}</span>
         </div>
       {/if}
     </div>
@@ -489,23 +491,23 @@
     <div class="rounded-2xl border border-border bg-surface p-5 shadow-sm">
       <h3 class="text-sm font-semibold text-text-main mb-3 flex items-center gap-1.5">
         <span class="material-symbols-outlined text-[18px] text-brand-500">dns</span>
-        Breakdown by Provider
+        {t('Breakdown by Provider')}
       </h3>
 
       {#if providerRows.length === 0}
         <div class="py-8 text-center text-xs text-text-subtle">
-          No provider prompt cache data recorded yet.
+          {t('No provider prompt cache data recorded yet.')}
         </div>
       {:else}
         <div class="overflow-x-auto">
           <table class="w-full text-left text-xs min-w-[540px]">
             <thead>
               <tr class="border-b border-border text-text-muted">
-                <th class="py-2.5 px-3 font-semibold">Provider</th>
-                <th class="py-2.5 px-3 font-semibold text-right">Cached / Total Req</th>
-                <th class="py-2.5 px-3 font-semibold text-right">Cached Tokens</th>
-                <th class="py-2.5 px-3 font-semibold text-right">Creation Tokens</th>
-                <th class="py-2.5 px-3 font-semibold text-right">Hit Rate</th>
+                <th class="py-2.5 px-3 font-semibold">{t('Provider')}</th>
+                <th class="py-2.5 px-3 font-semibold text-right">{t('Cached / Total Req')}</th>
+                <th class="py-2.5 px-3 font-semibold text-right">{t('Cached Tokens')}</th>
+                <th class="py-2.5 px-3 font-semibold text-right">{t('Creation Tokens')}</th>
+                <th class="py-2.5 px-3 font-semibold text-right">{t('Hit Rate')}</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-border-subtle">
@@ -535,8 +537,7 @@
       {/if}
         {#if (pc?.truncatedProviders ?? 0) > 0}
           <p class="mt-2 text-xs text-text-subtle">
-            Top {providerRows.length} of {providerRows.length + (pc?.truncatedProviders ?? 0)} providers by cached
-            tokens. Narrow the period to see the rest.
+            {t('Top {shown} of {total} providers by cached tokens. Narrow the period to see the rest.', { shown: providerRows.length, total: providerRows.length + (pc?.truncatedProviders ?? 0) })}
           </p>
         {/if}
     </div>
@@ -547,23 +548,23 @@
     <div class="rounded-2xl border border-border bg-surface p-5 shadow-sm">
       <h3 class="text-sm font-semibold text-text-main mb-3 flex items-center gap-1.5">
         <span class="material-symbols-outlined text-[18px] text-brand-500">model_training</span>
-        Breakdown by Model
+        {t('Breakdown by Model')}
       </h3>
 
       {#if modelRows.length === 0}
         <div class="py-8 text-center text-xs text-text-subtle">
-          No model prompt cache data recorded yet.
+          {t('No model prompt cache data recorded yet.')}
         </div>
       {:else}
         <div class="overflow-x-auto">
           <table class="w-full text-left text-xs min-w-[540px]">
             <thead>
               <tr class="border-b border-border text-text-muted">
-                <th class="py-2.5 px-3 font-semibold">Model</th>
-                <th class="py-2.5 px-3 font-semibold text-right">Cached / Total Req</th>
-                <th class="py-2.5 px-3 font-semibold text-right">Cached Tokens</th>
-                <th class="py-2.5 px-3 font-semibold text-right">Creation Tokens</th>
-                <th class="py-2.5 px-3 font-semibold text-right">Hit Rate</th>
+                <th class="py-2.5 px-3 font-semibold">{t('Model')}</th>
+                <th class="py-2.5 px-3 font-semibold text-right">{t('Cached / Total Req')}</th>
+                <th class="py-2.5 px-3 font-semibold text-right">{t('Cached Tokens')}</th>
+                <th class="py-2.5 px-3 font-semibold text-right">{t('Creation Tokens')}</th>
+                <th class="py-2.5 px-3 font-semibold text-right">{t('Hit Rate')}</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-border-subtle">
@@ -592,8 +593,7 @@
       {/if}
         {#if (pc?.truncatedModels ?? 0) > 0}
           <p class="mt-2 text-xs text-text-subtle">
-            Top {modelRows.length} of {modelRows.length + (pc?.truncatedModels ?? 0)} models by cached tokens.
-            Narrow the period to see the rest.
+            {t('Top {shown} of {total} models by cached tokens. Narrow the period to see the rest.', { shown: modelRows.length, total: modelRows.length + (pc?.truncatedModels ?? 0) })}
           </p>
         {/if}
     </div>
@@ -605,48 +605,48 @@
       <!-- Memory Entries -->
       <div class="rounded-2xl border border-border bg-surface p-4 shadow-sm">
         <div class="flex items-center justify-between text-text-muted">
-          <span class="text-xs font-medium uppercase tracking-wider">Memory Entries</span>
+          <span class="text-xs font-medium uppercase tracking-wider">{t('Memory Entries')}</span>
           <span class="material-symbols-outlined text-[20px] text-blue-400">memory</span>
         </div>
         <div class="mt-3">
           <div class="text-2xl font-bold text-text-main">{sc?.memoryEntries ?? 0}</div>
-          <p class="text-xs text-text-subtle mt-1">In-memory LRU store</p>
+          <p class="text-xs text-text-subtle mt-1">{t('In-memory LRU store')}</p>
         </div>
       </div>
 
       <!-- Hit Rate -->
       <div class="rounded-2xl border border-border bg-surface p-4 shadow-sm">
         <div class="flex items-center justify-between text-text-muted">
-          <span class="text-xs font-medium uppercase tracking-wider">Hit Rate</span>
+          <span class="text-xs font-medium uppercase tracking-wider">{t('Hit Rate')}</span>
           <span class="material-symbols-outlined text-[20px] text-emerald-500">percent</span>
         </div>
         <div class="mt-3">
           <div class="text-2xl font-bold text-emerald-500">{sc?.hitRate ?? '0.0'}%</div>
-          <p class="text-xs text-text-subtle mt-1">{sc?.hits ?? 0} hits / {(sc?.hits ?? 0) + (sc?.misses ?? 0)} total</p>
+          <p class="text-xs text-text-subtle mt-1">{t('{hits} hits / {total} total', { hits: sc?.hits ?? 0, total: (sc?.hits ?? 0) + (sc?.misses ?? 0) })}</p>
         </div>
       </div>
 
       <!-- Cache Hits -->
       <div class="rounded-2xl border border-border bg-surface p-4 shadow-sm">
         <div class="flex items-center justify-between text-text-muted">
-          <span class="text-xs font-medium uppercase tracking-wider">Hits / Misses</span>
+          <span class="text-xs font-medium uppercase tracking-wider">{t('Hits / Misses')}</span>
           <span class="material-symbols-outlined text-[20px] text-purple-400">sync_alt</span>
         </div>
         <div class="mt-3">
           <div class="text-2xl font-bold text-text-main">{sc?.hits ?? 0} / {sc?.misses ?? 0}</div>
-          <p class="text-xs text-text-subtle mt-1">Exact & semantic matches</p>
+          <p class="text-xs text-text-subtle mt-1">{t('Exact & semantic matches')}</p>
         </div>
       </div>
 
       <!-- Tokens Saved -->
       <div class="rounded-2xl border border-border bg-surface p-4 shadow-sm">
         <div class="flex items-center justify-between text-text-muted">
-          <span class="text-xs font-medium uppercase tracking-wider">Tokens Saved</span>
+          <span class="text-xs font-medium uppercase tracking-wider">{t('Tokens Saved')}</span>
           <span class="material-symbols-outlined text-[20px] text-emerald-400">savings</span>
         </div>
         <div class="mt-3">
           <div class="text-2xl font-bold text-emerald-400">{(sc?.tokensSaved ?? 0).toLocaleString()}</div>
-          <p class="text-xs text-text-subtle mt-1">From cached responses</p>
+          <p class="text-xs text-text-subtle mt-1">{t('From cached responses')}</p>
         </div>
       </div>
     </div>
@@ -658,9 +658,9 @@
         <div>
           <h3 class="text-sm font-semibold text-text-main flex items-center gap-1.5">
             <span class="material-symbols-outlined text-[18px] text-brand-500">tune</span>
-            Cache Invalidation & Cleanup
+            {t('Cache Invalidation & Cleanup')}
           </h3>
-          <p class="text-xs text-text-subtle">Invalidate cached responses by model or clear the entire store.</p>
+          <p class="text-xs text-text-subtle">{t('Invalidate cached responses by model or clear the entire store.')}</p>
         </div>
 
         <div class="flex items-center gap-2">
@@ -670,7 +670,7 @@
             class="flex items-center gap-1.5 rounded-xl border border-red-500/30 bg-red-500/10 px-3.5 py-2 text-xs font-semibold text-red-500 hover:bg-red-500/20 transition-colors"
           >
             <span class="material-symbols-outlined text-[16px]">delete_sweep</span>
-            Clear All Cache
+            {t('Clear All Cache')}
           </button>
         </div>
       </div>
@@ -679,7 +679,7 @@
       <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-border-subtle">
         <input
           type="text"
-          placeholder="Invalidate by model (e.g. gpt-4o, claude-3-5)"
+          placeholder={t('Invalidate by model (e.g. gpt-4o, claude-3-5)')}
           bind:value={invalidateModelInput}
           class="flex-1 min-w-[240px] rounded-xl border border-border bg-surface-2 px-3 py-1.5 text-xs text-text-main focus:outline-none focus:border-brand-500"
         />
@@ -688,7 +688,7 @@
           onclick={handleInvalidateByModel}
           class="rounded-xl border border-border bg-surface px-3 py-1.5 text-xs font-semibold text-text-main hover:bg-surface-2 transition-colors"
         >
-          Invalidate Model
+          {t('Invalidate Model')}
         </button>
       </div>
     </div>
@@ -701,7 +701,7 @@
         <div class="flex items-center gap-2">
           <h3 class="text-sm font-semibold text-text-main flex items-center gap-1.5">
             <span class="material-symbols-outlined text-[18px] text-brand-500">table_rows</span>
-            Cached Entries
+            {t('Cached Entries')}
           </h3>
           <span class="rounded-full bg-surface-2 px-2 py-0.5 text-[10px] font-semibold text-text-muted">
             {totalEntries}
@@ -716,7 +716,7 @@
             </span>
             <input
               type="text"
-              placeholder="Search signature/key..."
+              placeholder={t('Search signature/key...')}
               value={search}
               oninput={handleSearchInput}
               class="w-48 sm:w-64 rounded-xl border border-border bg-surface-2 pl-8 pr-3 py-1.5 text-xs text-text-main focus:outline-none focus:border-brand-500"
@@ -728,23 +728,23 @@
       {#if entriesLoading}
         <div class="py-12 text-center text-xs text-text-subtle flex items-center justify-center gap-2">
           <span class="material-symbols-outlined animate-spin text-[18px]">sync</span>
-          Loading entries...
+          {t('Loading entries...')}
         </div>
       {:else if entries.length === 0}
         <div class="py-12 text-center text-xs text-text-subtle">
-          No cached entries found.
+          {t('No cached entries found.')}
         </div>
       {:else}
         <div class="overflow-x-auto">
           <table class="w-full text-left text-xs">
             <thead>
               <tr class="border-b border-border text-text-muted">
-                <th class="py-2.5 px-3 font-semibold">Signature / Key</th>
-                <th class="py-2.5 px-3 font-semibold">Model</th>
-                <th class="py-2.5 px-3 font-semibold text-right">Hits</th>
-                <th class="py-2.5 px-3 font-semibold text-right">Tokens Saved</th>
-                <th class="py-2.5 px-3 font-semibold">Created</th>
-                <th class="py-2.5 px-3 font-semibold text-right">Action</th>
+                <th class="py-2.5 px-3 font-semibold">{t('Signature / Key')}</th>
+                <th class="py-2.5 px-3 font-semibold">{t('Model')}</th>
+                <th class="py-2.5 px-3 font-semibold text-right">{t('Hits')}</th>
+                <th class="py-2.5 px-3 font-semibold text-right">{t('Tokens Saved')}</th>
+                <th class="py-2.5 px-3 font-semibold">{t('Created')}</th>
+                <th class="py-2.5 px-3 font-semibold text-right">{t('Action')}</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-border-subtle">
@@ -757,7 +757,7 @@
                         type="button"
                         onclick={() => copyToClipboard(entry.signature)}
                         class="text-text-subtle hover:text-text-main shrink-0"
-                        title="Copy signature"
+                        title={t('Copy signature')}
                       >
                         <span class="material-symbols-outlined text-[14px]">content_copy</span>
                       </button>
@@ -782,7 +782,7 @@
                       type="button"
                       onclick={() => handleDeleteEntry(entry.id)}
                       class="text-text-subtle hover:text-red-500 transition-colors"
-                      title="Delete entry"
+                      title={t('Delete entry')}
                     >
                       <span class="material-symbols-outlined text-[16px]">delete</span>
                     </button>
@@ -797,7 +797,7 @@
         {#if totalPages > 1}
           <div class="flex items-center justify-between pt-3 border-t border-border-subtle text-xs text-text-muted">
             <div>
-              Page {page} of {totalPages}
+              {t('Page {page} of {totalPages}', { page, totalPages })}
             </div>
             <div class="flex items-center gap-1">
               <button
@@ -809,7 +809,7 @@
                 }}
                 class="rounded-lg border border-border bg-surface px-2.5 py-1 text-xs disabled:opacity-40 hover:bg-surface-2"
               >
-                Previous
+                {t('Previous')}
               </button>
               <button
                 type="button"
@@ -820,7 +820,7 @@
                 }}
                 class="rounded-lg border border-border bg-surface px-2.5 py-1 text-xs disabled:opacity-40 hover:bg-surface-2"
               >
-                Next
+                {t('Next')}
               </button>
             </div>
           </div>

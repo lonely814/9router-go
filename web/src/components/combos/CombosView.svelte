@@ -30,6 +30,7 @@
   import CapacityAdapterSection from './CapacityAdapterSection.svelte'
   import ConfirmModal from '../../lib/ui/ConfirmModal.svelte'
   import { copyToClipboard } from '../../lib/clipboard'
+  import { t } from '../../lib/i18n.svelte'
   interface Props {
     combos?: Combo[]
     connections?: ProviderConnection[]
@@ -461,9 +462,13 @@ async function handleSetContextWindow(combo: Combo, contextWindow: number) {
     reconcileNote = ''
     try {
       const res = await api.reconcileCombos()
-      const parts: string[] = [`${res.reconciled} combo${res.reconciled === 1 ? '' : 's'} updated`]
-      if (res.added?.length) parts.push(`+${res.added.length} added`)
-      if (res.removed?.length) parts.push(`-${res.removed.length} removed`)
+      const parts: string[] = [
+        res.reconciled === 1
+          ? t('{count} combo updated', { count: res.reconciled })
+          : t('{count} combos updated', { count: res.reconciled }),
+      ]
+      if (res.added?.length) parts.push(t('+{count} added', { count: res.added.length }))
+      if (res.removed?.length) parts.push(t('-{count} removed', { count: res.removed.length }))
       reconcileNote = parts.join(' · ')
       onRefresh()
     } catch (e) {
@@ -549,7 +554,7 @@ async function handleSetContextWindow(combo: Combo, contextWindow: number) {
     clearSelection()
     onRefresh()
     if (deleted < ids.length) {
-      alert(`Deleted ${deleted} of ${ids.length} combo(s). The rest could not be removed.`)
+      alert(t('Deleted {deleted} of {total} combo(s). The rest could not be removed.', { deleted, total: ids.length }))
     }
   }
 
@@ -588,7 +593,7 @@ async function handleSetContextWindow(combo: Combo, contextWindow: number) {
       onRefresh()
     } catch (e) {
       alert(
-        'Failed to set strategy: ' + (e instanceof Error ? e.message : String(e))
+        t('Failed to set strategy: {error}', { error: e instanceof Error ? e.message : String(e) })
       )
     }
   }
@@ -603,15 +608,15 @@ async function handleSetContextWindow(combo: Combo, contextWindow: number) {
       <input
         type="text"
         bind:value={searchQuery}
-        placeholder="Search combos…"
-        aria-label="Search combos"
+        placeholder={t('Search combos…')}
+        aria-label={t('Search combos')}
         class="w-full rounded-[10px] border border-transparent bg-surface-2 py-2 pl-9 pr-9 text-sm text-text-main transition-all duration-150 ease-out placeholder-text-muted/70 focus:border-brand-500/40 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
       />
       {#if searchQuery}
         <button
           type="button"
           onclick={() => (searchQuery = '')}
-          aria-label="Clear search"
+          aria-label={t('Clear search')}
           class="absolute right-2 top-1/2 -translate-y-1/2 rounded p-2.5 sm:p-1 text-text-muted transition-colors hover:text-text-main"
         >
           <X class="h-4 w-4" />
@@ -619,7 +624,7 @@ async function handleSetContextWindow(combo: Combo, contextWindow: number) {
       {/if}
     </div>
     <Button onclick={handleReconcile} variant="ghost" size="sm" loading={isReconciling}>
-      Reconcile rules
+      {t('Reconcile rules')}
     </Button>
     {#if reconcileNote}
       <span class="text-[11px] text-text-muted">{reconcileNote}</span>
@@ -641,7 +646,9 @@ async function handleSetContextWindow(combo: Combo, contextWindow: number) {
           class="h-3.5 w-3.5 rounded border-gray-300 text-primary focus:ring-primary"
         />
         <span>
-          {selectedCombos.length > 0 ? `${selectedCombos.length} selected` : `Select all (${filteredCombos.length})`}
+          {selectedCombos.length > 0
+            ? t('{count} selected', { count: selectedCombos.length })
+            : t('Select all ({count})', { count: filteredCombos.length })}
         </span>
       </label>
 
@@ -649,7 +656,7 @@ async function handleSetContextWindow(combo: Combo, contextWindow: number) {
         <div class="flex min-w-0 flex-wrap items-center gap-2">
           {#if normalizedQuery}
             <span class="text-xs text-text-muted">
-              {filteredCombos.length} of {llmCombos.length} shown
+              {t('{shown} of {total} shown', { shown: filteredCombos.length, total: llmCombos.length })}
             </span>
           {/if}
           {#if selectedCombos.length > 0}
@@ -658,9 +665,9 @@ async function handleSetContextWindow(combo: Combo, contextWindow: number) {
                 bind:value={bulkStrategy}
                 class="w-full bg-surface-2 border border-border rounded-lg px-2.5 py-1.5 text-xs text-text-main focus:outline-none focus:ring-brand-500 focus:border-brand-500 cursor-pointer"
               >
-                <option value="" disabled>Set strategy…</option>
+                <option value="" disabled>{t('Set strategy…')}</option>
                 {#each comboStrategyOptions(globalComboStrategy) as strategy (strategy.value)}
-                  <option value={strategy.value}>{strategy.label}</option>
+                  <option value={strategy.value}>{t(strategy.label)}</option>
                 {/each}
               </select>
             </div>
@@ -671,7 +678,7 @@ async function handleSetContextWindow(combo: Combo, contextWindow: number) {
               disabled={!bulkStrategy}
               class="whitespace-nowrap"
             >
-              Apply Strategy
+              {t('Apply Strategy')}
             </Button>
             <Button
               icon="delete"
@@ -680,10 +687,10 @@ async function handleSetContextWindow(combo: Combo, contextWindow: number) {
               onclick={handleDeleteSelected}
               class="whitespace-nowrap"
             >
-              Delete ({selectedCombos.length})
+              {t('Delete ({count})', { count: selectedCombos.length })}
             </Button>
             <Button size="sm" variant="ghost" onclick={clearSelection} class="whitespace-nowrap">
-              Clear
+              {t('Clear')}
             </Button>
           {/if}
         </div>
@@ -698,10 +705,10 @@ async function handleSetContextWindow(combo: Combo, contextWindow: number) {
         <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-brand-500/10 text-brand-500 mb-4">
           <Layers class="w-8 h-8" />
         </div>
-        <p class="text-text-main font-medium mb-1">No combos yet</p>
-        <p class="text-sm text-text-muted mb-4">Create model combos with fallback support</p>
+        <p class="text-text-main font-medium mb-1">{t('No combos yet')}</p>
+        <p class="text-sm text-text-muted mb-4">{t('Create model combos with fallback support')}</p>
         <Button icon="add" onclick={openCreateModal} class="w-full sm:w-auto">
-          Create Combo
+          {t('Create Combo')}
         </Button>
       </div>
     </Card>
@@ -709,11 +716,13 @@ async function handleSetContextWindow(combo: Combo, contextWindow: number) {
     {#if filteredCombos.length === 0}
       <Card>
         <div class="text-center py-10">
-          <p class="text-text-main font-medium mb-1">No combos match “{searchQuery.trim()}”</p>
+          <p class="text-text-main font-medium mb-1">{t('No combos match “{query}”', { query: searchQuery.trim() })}</p>
           <p class="text-sm text-text-muted mb-4">
-            Try a shorter query, or clear the search to see all {llmCombos.length} combos.
+            {t('Try a shorter query, or clear the search to see all {count} combos.', {
+              count: llmCombos.length
+            })}
           </p>
-          <Button variant="secondary" onclick={() => (searchQuery = '')}>Clear search</Button>
+          <Button variant="secondary" onclick={() => (searchQuery = '')}>{t('Clear search')}</Button>
         </div>
       </Card>
     {:else}
@@ -802,13 +811,16 @@ async function handleSetContextWindow(combo: Combo, contextWindow: number) {
 <!-- Confirm Delete Modal (upstream ConfirmModal parity) -->
 <ConfirmModal
   isOpen={!!confirmState}
-  title="Delete Combo"
+  title={t('Delete Combo')}
   message={
     confirmState
       ? confirmState.ids.length === 1
-        ? `Delete combo "${confirmState.name}"?`
-        : `Delete ${confirmState.ids.length} combo(s)? (${confirmState.name})`
-      : 'Delete this combo?'
+        ? t('Delete combo "{name}"?', { name: confirmState.name })
+        : t('Delete {count} combo(s)? ({names})', {
+            count: confirmState.ids.length,
+            names: confirmState.name,
+          })
+      : t('Delete this combo?')
   }
   onClose={() => (confirmState = null)}
   onConfirm={handleDeleteCombos}

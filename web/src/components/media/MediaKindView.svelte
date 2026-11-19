@@ -3,6 +3,7 @@
   import { api, type APIKey, type Combo, type ProviderConnection, type ProviderNode, type Settings } from '../../api/client'
   import { getProvidersByKind, type ProviderCatalogItem } from '../../lib/providers'
   import { hasAnyNodeLimitPatch } from '../../lib/node-limits'
+  import { t } from '../../lib/i18n.svelte'
   import type { ProviderNodeLimitsPatch } from '../../api/client'
   import Badge from '../../lib/ui/Badge.svelte'
   import Card from '../../lib/ui/Card.svelte'
@@ -65,7 +66,7 @@
   let customProviders = $derived(
     customNodes.map((n) => ({
       id: n.id,
-      name: n.name || 'Custom Embedding',
+      name: n.name || t('Custom Embedding'),
       category: 'custom' as const,
       alias: n.prefix || n.id,
       color: '#6366F1',
@@ -97,7 +98,7 @@
       await api.createCombo({ name, models: [], kind })
       onRefresh()
     } catch (err: any) {
-      alert(err.message || 'Failed to create combo')
+      alert(err.message || t('Failed to create combo'))
     }
   }
 
@@ -123,7 +124,9 @@
         await api.setProviderNodeLimits(node.id, data.limits)
       } catch (err) {
         alert(
-          `Provider node created, but its capacity limits did not save: ${err instanceof Error ? err.message : String(err)}`,
+          t('Provider node created, but its capacity limits did not save: {error}', {
+            error: err instanceof Error ? err.message : String(err),
+          }),
         )
       }
     }
@@ -154,7 +157,7 @@
             class="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-surface border border-border hover:bg-surface-2 text-text-main text-xs font-medium transition-colors cursor-pointer shadow-sm"
           >
             <span class="material-symbols-outlined text-sm">add</span>
-            Create Combo
+            {t('Create Combo')}
           </button>
         {/if}
         {#if isEmbedding}
@@ -164,7 +167,7 @@
             class="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-semibold transition-colors cursor-pointer shadow-sm"
           >
             <span class="material-symbols-outlined text-sm">add</span>
-            Add Custom Embedding
+            {t('Add Custom Embedding')}
           </button>
         {/if}
       </div>
@@ -172,7 +175,7 @@
 
     {#if supportsCombo && kindCombos.length > 0}
       <div class="flex flex-col gap-2">
-        <h2 class="text-xs font-semibold text-text-muted uppercase tracking-wider">Combos</h2>
+        <h2 class="text-xs font-semibold text-text-muted uppercase tracking-wider">{t('Combos')}</h2>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {#each kindCombos as combo (combo.id)}
             <a href={`/dashboard/media-providers/combo/${combo.id}`}>
@@ -184,7 +187,7 @@
                   <div class="min-w-0 flex-1">
                     <h3 class="font-semibold text-sm truncate">{combo.name}</h3>
                     <div class="flex items-center gap-2 mt-0.5">
-                      <Badge variant="default" size="sm">{combo.models?.length ?? 0} models</Badge>
+                      <Badge variant="default" size="sm">{t('{count} models', { count: combo.models?.length ?? 0 })}</Badge>
                     </div>
                   </div>
                 </div>
@@ -197,7 +200,7 @@
 
     {#if allProviders.length === 0}
       <div class="text-center py-12 border border-dashed border-border rounded-xl text-text-muted text-sm">
-        No providers support <strong>{kindConfig?.title || kind}</strong> yet.
+        {t('No providers support')} <strong>{kindConfig?.title || kind}</strong> {t('yet.')}
       </div>
     {:else}
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
